@@ -1,4 +1,4 @@
-package com.example.yimt;
+package com.yimt;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -18,7 +18,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
-import com.example.yimt.databinding.ActivityMainBinding;
+import com.yimt.databinding.ActivityMainBinding;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;

@@ -1,4 +1,4 @@
-package com.example.yimt;
+package com.yimt;
 
 import android.content.Context;
 
