@@ -1,4 +1,4 @@
-package com.example.test4;
+package com.example.yimt;
 
 import org.junit.Test;
 
