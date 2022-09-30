@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">LibreTranslator</string>
+    <string name="app_name" translatable="false">YiMT</string>
 
     <string name="aboutAndSettings">About and Settings</string>
     <string name="switch_theme">switch theme</string>
