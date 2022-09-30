@@ -471,14 +471,16 @@ public class MainActivity extends AppCompatActivity {
 
     private int theme(){
         settings = getSharedPreferences("de.beowulf.libretranslater", 0);
-        int res;
-        switch (settings.getInt("Theme", 1)){
+        int res = R.style.LightTheme;
+        /*
+        switch (settings.getInt("Theme", 4)){
             case 1: res = R.style.DarkTheme; break;
             case 2: res = R.style.LilaTheme; break;
             case 3: res = R.style.SandTheme; break;
             case 4: res = R.style.BlueTheme; break;
             default: res = R.style.LightTheme; break;
         }
+         */
         return res;
     }
 }
