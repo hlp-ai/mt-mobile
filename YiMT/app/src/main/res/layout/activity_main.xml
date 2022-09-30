@@ -34,15 +34,18 @@
                 app:drawableRightCompat="@drawable/settings"
                 app:drawableTint="?attr/colorPrimary" />
 
-            <Button
-                android:id="@+id/themeSwitcher"
-                android:layout_width="33dp"
-                android:layout_height="33dp"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentRight="true"
-                android:layout_margin="21dp"
-                android:background="@drawable/theme_round_button"
-                android:contentDescription="@string/switch_theme" />
+<!--            <Button-->
+<!--                android:id="@+id/themeSwitcher"-->
+<!--                android:layout_width="33dp"-->
+<!--                android:layout_height="33dp"-->
+<!--                android:layout_alignParentEnd="true"-->
+<!--                android:layout_alignParentRight="true"-->
+<!--                android:layout_marginStart="21dp"-->
+<!--                android:layout_marginTop="21dp"-->
+<!--                android:layout_marginEnd="21dp"-->
+<!--                android:layout_marginBottom="21dp"-->
+<!--                android:background="@drawable/theme_round_button"-->
+<!--                android:contentDescription="@string/switch_theme" />-->
 
         </RelativeLayout>
 
@@ -119,29 +122,28 @@
 
                 <ImageButton
                     android:id="@+id/CopyTranslation"
-                    android:layout_width="25dp"
+                    android:layout_width="60dp"
                     android:layout_height="25dp"
                     android:layout_centerVertical="true"
                     android:layout_marginVertical="20dp"
-                    android:layout_toStartOf="@+id/ShareTranslation"
-                    android:layout_toLeftOf="@+id/ShareTranslation"
+                    android:layout_alignParentRight="true"
                     android:background="#00FFFFFF"
                     android:contentDescription="@string/copy"
                     android:src="@drawable/copy"
                     app:tint="?attr/frontColor" />
 
-                <ImageButton
-                    android:id="@+id/ShareTranslation"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginHorizontal="20dp"
-                    android:background="#00FFFFFF"
-                    android:contentDescription="@string/share"
-                    android:src="@drawable/share"
-                    app:tint="?attr/frontColor" />
+<!--                <ImageButton-->
+<!--                    android:id="@+id/ShareTranslation"-->
+<!--                    android:layout_width="25dp"-->
+<!--                    android:layout_height="25dp"-->
+<!--                    android:layout_alignParentEnd="true"-->
+<!--                    android:layout_alignParentRight="true"-->
+<!--                    android:layout_centerVertical="true"-->
+<!--                    android:layout_marginHorizontal="20dp"-->
+<!--                    android:background="#00FFFFFF"-->
+<!--                    android:contentDescription="@string/share"-->
+<!--                    android:src="@drawable/share"-->
+<!--                    app:tint="?attr/frontColor" />-->
 
             </RelativeLayout>
 

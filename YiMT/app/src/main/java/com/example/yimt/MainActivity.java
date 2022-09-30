@@ -1,4 +1,4 @@
-package com.example.test4;
+package com.example.yimt;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -18,7 +18,7 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.view.View;
-import com.example.test4.databinding.ActivityMainBinding;
+import com.example.yimt.databinding.ActivityMainBinding;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
@@ -72,7 +72,8 @@ public class MainActivity extends AppCompatActivity {
 
             sourceLangId = settings.getInt("Source", 0);
             setSourceLang();
-            targetLangId = settings.getInt("Target", availableLangCodes.size()-1);
+            targetLangId = settings.getInt("Target", 3);
+//            targetLangId = 3;
             setTargetLang();
         }
         Intent intent = getIntent();
@@ -153,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        /*
         binding.ShareTranslation.setOnClickListener(view -> {
             if (!binding.TranslatedTV.getText().toString().equals("")){
                 startActivity(Intent.createChooser(new Intent(),null)
@@ -162,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 );
             }
         });
+         */
 
         binding.SwitchLanguages.setOnClickListener(view -> {
             int cacheLang = sourceLangId;
@@ -176,6 +179,7 @@ public class MainActivity extends AppCompatActivity {
 
         binding.TargetLanguageBot.setOnClickListener(view -> chooseLang(false));
 
+        /*
         //theme switcher
         binding.themeSwitcher.setOnClickListener(view -> {
             int newTheme = settings.getInt("Theme", 1) + 1;
@@ -188,6 +192,7 @@ public class MainActivity extends AppCompatActivity {
             finish();
             startActivity(intent);
         });
+         */
 
         //About dialog
         binding.info.setOnClickListener(view -> {
@@ -310,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
                 setSourceLang();
             }
             if (binding.TargetLanguageTop.getText() == "" || ! availableLangCodes.contains(getResources().getStringArray(R.array.LangCodes)[lang.indexOf(binding.TargetLanguageTop.getText())])) {
-                targetLangId = availableLangCodes.size()-1;
+                targetLangId = 3;
                 setTargetLang();
             }
         }
