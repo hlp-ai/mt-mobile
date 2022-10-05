@@ -5,77 +5,80 @@
     android:orientation="vertical"
     android:padding="15dp">
 
-    <TextView
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/addCustomServer"
-        android:textSize="16sp" />
-
-    <EditText
-        android:id="@+id/Server"
+        android:layout_height="80dp"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/about_title"
+            android:textSize="32sp" />
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/addCustomServer"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:textColor="?attr/frontColor" />
+        android:layout_height="50dp"
+        android:gravity="center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/addCustomServer"
+            android:textSize="20sp" />
+        <EditText
+            android:id="@+id/Server"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/addCustomServerE"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:textColor="?attr/frontColor" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/addApiKey"
-        android:textSize="16sp" />
-
-    <EditText
-        android:id="@+id/Api"
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/addApiKey"
-        android:importantForAutofill="no"
-        android:inputType="text"
-        android:textColor="?attr/frontColor" />
+        android:layout_height="50dp"
+        android:gravity="center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/addCustomPort"
+            android:textSize="20sp" />
 
-    <View
-        android:layout_width="200dp"
-        android:layout_height="1dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="15dp"
-        android:background="?frontColor" />
+        <EditText
+            android:id="@+id/Port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/addCustomPortE"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:textColor="?attr/frontColor" />
 
-    <CheckBox
-        android:id="@+id/Shrink"
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/shrink_view"
-        android:textColor="?attr/frontColor" />
+        android:layout_height="50dp"
+        android:gravity="center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/addApiKey"
+            android:textSize="20sp" />
 
-    <View
-        android:layout_width="200dp"
-        android:layout_height="1dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_margin="15dp"
-        android:background="?frontColor" />
+        <EditText
+            android:id="@+id/Api"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/addApiKeyE"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:textColor="?attr/frontColor" />
 
-    <TextView
-        android:id="@+id/aboutTV1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingBottom="5dp"
-        android:text="@string/base"
-        android:textSize="14sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
 
-    <TextView
-        android:id="@+id/aboutTV2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/reportError"
-        android:textSize="14sp" />
 
-    <TextView
-        android:id="@+id/aboutTV3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/created_by"
-        android:textSize="14sp" />
-
+    </LinearLayout>
 </LinearLayout>
