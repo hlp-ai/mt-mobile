@@ -16,14 +16,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.text.method.LinkMovementMethod;
 import android.view.View;
 import com.yimt.databinding.ActivityMainBinding;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -51,12 +47,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         MainActivity activity = this;
-        setTheme(theme());
+        settings = getSharedPreferences("de.beowulf.libretranslater", 0);
+        setTheme(R.style.LightTheme);
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 //        settings.edit()
-//                .putString("server", "libretranslate.de")
+//                .putString("port", "")
 //                .apply();
         try {
             retrieveLanguages();
@@ -64,17 +61,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         String languages = settings.getString("languages", "");
-        if(!languages.equals("")){//fix
-            String[] split = languages.split(",");
-
-            List<String> availableLangCodes = new ArrayList<>();
-
-            Collections.addAll(availableLangCodes, split);//fix
-
+        if(!languages.equals("")){
             sourceLangId = settings.getInt("Source", 0);
             setSourceLang();
             targetLangId = settings.getInt("Target", 3);
-//            targetLangId = 3;
             setTargetLang();
         }
         Intent intent = getIntent();
@@ -198,35 +188,27 @@ public class MainActivity extends AppCompatActivity {
         //About dialog
         binding.info.setOnClickListener(view -> {
             View about = getLayoutInflater().inflate(R.layout.about,null);
-            EditText serverET = (EditText)about.findViewById(R.id.Server);
-            EditText portET = (EditText)about.findViewById(R.id.Port);
-            EditText apiET = (EditText)about.findViewById(R.id.Api);
-//            CheckBox shrinkCB =(CheckBox)about.findViewById(R.id.Shrink);
-//            TextView tv1 = about.findViewById(R.id.aboutTV1);
-//            TextView tv2 = about.findViewById(R.id.aboutTV2);
-//            TextView tv3 = about.findViewById(R.id.aboutTV3);
+            EditText serverET = about.findViewById(R.id.Server);
+            EditText portET = about.findViewById(R.id.Port);
+            EditText apiET = about.findViewById(R.id.Api);
             final String[] server = {settings.getString("server", "libretranslate.de")};
+            final String[] port = {settings.getString("port", "")};
             String apiKey = settings.getString("apiKey","");
-//            boolean shrink = settings.getBoolean("shrink", false);
             serverET.setText(server[0]);
             apiET.setText(apiKey);
-//            shrinkCB.setChecked(shrink);
-//            tv1.setMovementMethod(LinkMovementMethod.getInstance());
-//            tv2.setMovementMethod(LinkMovementMethod.getInstance());
-//            tv3.setMovementMethod(LinkMovementMethod.getInstance());
+            portET.setText(port[0]);
             AlertDialog.Builder popUp = new AlertDialog.Builder(activity, R.style.AlertDialog);
             popUp.setView(about)
-                    .setTitle(getString(R.string.app_name))
+                    .setTitle(getString(R.string.about_title))
                     .setPositiveButton("Save", (dialogInterface, i) -> {
                         server[0] = serverET.getText().toString().replace("http://", "")
                                 .replace("https://", "")
                                 .replace("www.", "")
                                 .replace("/translate", "");
-                        if (!portET.getText().toString().equals("")){
-                            server[0] += ":"+ portET.getText();
-                        }
+                        port[0] = portET.getText().toString();
                         settings.edit()
                                 .putString("server", server[0])
+                                .putString("port", port[0])
                                 .putString("apiKey", apiET.getText().toString())
                                 .apply();
 
@@ -236,13 +218,6 @@ public class MainActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-//                        if (shrink != shrinkCB.isChecked()) {
-//                            settings.edit()
-//                                    .putBoolean("shrink", shrinkCB.isChecked())
-//                                    .apply();
-//                            finish();
-//                            startActivity(intent);
-//                        }
                     })
                     .setNegativeButton(getString(R.string.close),null)
                     .show();
@@ -251,12 +226,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void retrieveLanguages() throws Exception {
         String server = settings.getString("server", "libretranslate.de");
+        String port = settings.getString("port","");
         final String[] languages = {""};
         final String[] serverError = {""};
-            URL url = new URL("https://"+server+"/languages");
-            HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("accept", "application/json");
+        String ur = "https://"+server;
+        if (!port.equals(""))
+            ur+= ":"+port;
+        ur+="/languages";
+        URL url = new URL(ur);
+        HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("accept", "application/json");
         Thread thread= new Thread(() -> {
             try {
                 InputStream inputStream = connection.getInputStream();
@@ -264,7 +244,6 @@ public class MainActivity extends AppCompatActivity {
                 JSONArray jsonArray = new JSONArray(reader.readLine());
                 StringBuilder languagesSB = new StringBuilder();
                 List<String> lsb = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.LangCodes)));
-                //lsb.addAll(Arrays.asList(getResources().getStringArray(R.array.LangCodes)));
                 for (int i = 0;i<jsonArray.length();i++){
                     String langCode = jsonArray.getJSONObject(i).getString("code");
                     if (lsb.contains(langCode))
@@ -334,10 +313,15 @@ public class MainActivity extends AppCompatActivity {
         List<String> availableLangCodes = new ArrayList<>();
         if (!(binding.SourceText.getText().toString().equals("") || languages.equals(""))){//fix
             String server = settings.getString("server", "libretranslate.de");
+            String port = settings.getString("port","");
             String apiKey = settings.getString("apiKey", "");
             HttpsURLConnection connection = null;
             try {
-                URL url = new URL("https://"+server+"/translate");
+                String ur = "https://"+server;
+                if (!port.equals(""))
+                    ur+= ":"+port;
+                ur+="/translate";
+                URL url = new URL(ur);
                 String[] str = languages.split(",");
                 Collections.addAll(availableLangCodes, str);
                 connection = (HttpsURLConnection)url.openConnection();
@@ -472,20 +456,5 @@ public class MainActivity extends AppCompatActivity {
                 })
                 .setPositiveButton(getString(R.string.abort), (dialog, which) -> dialog.cancel())
                 .show();
-    }
-
-    private int theme(){
-        settings = getSharedPreferences("de.beowulf.libretranslater", 0);
-        int res = R.style.LightTheme;
-        /*
-        switch (settings.getInt("Theme", 4)){
-            case 1: res = R.style.DarkTheme; break;
-            case 2: res = R.style.LilaTheme; break;
-            case 3: res = R.style.SandTheme; break;
-            case 4: res = R.style.BlueTheme; break;
-            default: res = R.style.LightTheme; break;
-        }
-         */
-        return res;
     }
 }
