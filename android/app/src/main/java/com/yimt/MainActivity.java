@@ -55,8 +55,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        if(settings.getBoolean("shrink", false))
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+//        settings.edit()
+//                .putString("server", "libretranslate.de")
+//                .apply();
         try {
             retrieveLanguages();
         } catch (Exception e) {
@@ -198,20 +199,21 @@ public class MainActivity extends AppCompatActivity {
         binding.info.setOnClickListener(view -> {
             View about = getLayoutInflater().inflate(R.layout.about,null);
             EditText serverET = (EditText)about.findViewById(R.id.Server);
+            EditText portET = (EditText)about.findViewById(R.id.Port);
             EditText apiET = (EditText)about.findViewById(R.id.Api);
-            CheckBox shrinkCB =(CheckBox)about.findViewById(R.id.Shrink);
-            TextView tv1 = about.findViewById(R.id.aboutTV1);
-            TextView tv2 = about.findViewById(R.id.aboutTV2);
-            TextView tv3 = about.findViewById(R.id.aboutTV3);
+//            CheckBox shrinkCB =(CheckBox)about.findViewById(R.id.Shrink);
+//            TextView tv1 = about.findViewById(R.id.aboutTV1);
+//            TextView tv2 = about.findViewById(R.id.aboutTV2);
+//            TextView tv3 = about.findViewById(R.id.aboutTV3);
             final String[] server = {settings.getString("server", "libretranslate.de")};
             String apiKey = settings.getString("apiKey","");
-            boolean shrink = settings.getBoolean("shrink", false);
+//            boolean shrink = settings.getBoolean("shrink", false);
             serverET.setText(server[0]);
             apiET.setText(apiKey);
-            shrinkCB.setChecked(shrink);
-            tv1.setMovementMethod(LinkMovementMethod.getInstance());
-            tv2.setMovementMethod(LinkMovementMethod.getInstance());
-            tv3.setMovementMethod(LinkMovementMethod.getInstance());
+//            shrinkCB.setChecked(shrink);
+//            tv1.setMovementMethod(LinkMovementMethod.getInstance());
+//            tv2.setMovementMethod(LinkMovementMethod.getInstance());
+//            tv3.setMovementMethod(LinkMovementMethod.getInstance());
             AlertDialog.Builder popUp = new AlertDialog.Builder(activity, R.style.AlertDialog);
             popUp.setView(about)
                     .setTitle(getString(R.string.app_name))
@@ -220,6 +222,9 @@ public class MainActivity extends AppCompatActivity {
                                 .replace("https://", "")
                                 .replace("www.", "")
                                 .replace("/translate", "");
+                        if (!portET.getText().toString().equals("")){
+                            server[0] += ":"+ portET.getText();
+                        }
                         settings.edit()
                                 .putString("server", server[0])
                                 .putString("apiKey", apiET.getText().toString())
@@ -231,13 +236,13 @@ public class MainActivity extends AppCompatActivity {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
-                        if (shrink != shrinkCB.isChecked()) {
-                            settings.edit()
-                                    .putBoolean("shrink", shrinkCB.isChecked())
-                                    .apply();
-                            finish();
-                            startActivity(intent);
-                        }
+//                        if (shrink != shrinkCB.isChecked()) {
+//                            settings.edit()
+//                                    .putBoolean("shrink", shrinkCB.isChecked())
+//                                    .apply();
+//                            finish();
+//                            startActivity(intent);
+//                        }
                     })
                     .setNegativeButton(getString(R.string.close),null)
                     .show();
