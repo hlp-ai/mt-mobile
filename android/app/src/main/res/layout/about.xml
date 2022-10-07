@@ -31,26 +31,6 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/addCustomPort"
-            android:textSize="20sp" />
-
-        <EditText
-            android:id="@+id/Port"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/addCustomPortE"
-            android:importantForAutofill="no"
-            android:inputType="text"
-            android:textColor="?attr/frontColor" />
-
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:gravity="center">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:text="@string/addApiKey"
             android:textSize="20sp" />
 
