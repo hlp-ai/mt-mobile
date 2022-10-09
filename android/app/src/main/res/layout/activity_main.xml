@@ -120,30 +120,32 @@
                     android:layout_toLeftOf="@id/CopyTranslation"
                     android:textSize="20sp" />
 
+<!--                <Button-->
+<!--                    android:id="@+id/StartTranslation"-->
+<!--                    android:layout_width="100dp"-->
+<!--                    android:layout_height="50dp"-->
+<!--                    android:layout_centerVertical="true"-->
+<!--                    android:layout_marginVertical="20dp"-->
+<!--                    android:layout_toStartOf="@+id/CopyTranslation"-->
+<!--                    android:layout_toLeftOf="@+id/CopyTranslation"-->
+<!--                    android:background="#00FFFFFF"-->
+<!--                    android:text="@string/translate"-->
+<!--                    android:textSize="25dp"-->
+<!--                    android:textStyle="bold">-->
+
+<!--                </Button>-->
                 <ImageButton
                     android:id="@+id/CopyTranslation"
                     android:layout_width="60dp"
                     android:layout_height="25dp"
+                    android:layout_alignParentRight="true"
                     android:layout_centerVertical="true"
                     android:layout_marginVertical="20dp"
-                    android:layout_alignParentRight="true"
                     android:background="#00FFFFFF"
                     android:contentDescription="@string/copy"
                     android:src="@drawable/copy"
                     app:tint="?attr/frontColor" />
 
-<!--                <ImageButton-->
-<!--                    android:id="@+id/ShareTranslation"-->
-<!--                    android:layout_width="25dp"-->
-<!--                    android:layout_height="25dp"-->
-<!--                    android:layout_alignParentEnd="true"-->
-<!--                    android:layout_alignParentRight="true"-->
-<!--                    android:layout_centerVertical="true"-->
-<!--                    android:layout_marginHorizontal="20dp"-->
-<!--                    android:background="#00FFFFFF"-->
-<!--                    android:contentDescription="@string/share"-->
-<!--                    android:src="@drawable/share"-->
-<!--                    app:tint="?attr/frontColor" />-->
 
             </RelativeLayout>
 
