@@ -8,21 +8,28 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+
 import com.yimt.databinding.ActivityMainBinding;
+
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -36,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.net.HttpURLConnection;
+
 import javax.net.ssl.HttpsURLConnection;
 
 
@@ -54,17 +62,15 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-//        settings.edit()
-//                .putString("server", "libretranslate.de")
-//                .putString("port","")
-//                .apply();
+
         try {
             retrieveLanguages();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         String languages = settings.getString("languages", "");
-        if(!languages.equals("")){
+        if (!languages.equals("")) {
             sourceLangId = settings.getInt("Source", 0);
             setSourceLang();
             targetLangId = settings.getInt("Target", 3);
@@ -72,21 +78,21 @@ public class MainActivity extends AppCompatActivity {
         }
         Intent intent = getIntent();
         if (intent.getAction().equals(Intent.ACTION_SEND)) {
-            if (intent.getExtras() != null){
+            if (intent.getExtras() != null) {
                 String s = getString(Integer.parseInt(Intent.EXTRA_TEXT));
                 binding.SourceText.setText(s);
             }
-                translateText();
+            translateText();
         }
         new Handler(Looper.getMainLooper());
-        mhandler = new Handler(Looper.getMainLooper()){
-            public void handleMessage(Message msg){
+        mhandler = new Handler(Looper.getMainLooper()) {
+            public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 if (msg.what == 1) {
                     Bundle lc = msg.getData();
                     String langCode = lc.getString("lc");
                     Toast.makeText(activity, getString(R.string.langError, langCode), Toast.LENGTH_SHORT).show();
-                }else if (msg.what == 2){
+                } else if (msg.what == 2) {
                     Bundle lc = msg.getData();
                     String transString = lc.getString("transString");
                     String serverError = lc.getString("serverError");
@@ -94,16 +100,16 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(activity, serverError, Toast.LENGTH_SHORT).show();
                     binding.TranslatedTV.setText(transString);
                     binding.translationPending.setVisibility(View.GONE);
-                }else if (msg.what == 3){
+                } else if (msg.what == 3) {
                     Bundle lc = msg.getData();
                     String languages = lc.getString("languages");
                     String serverError = lc.getString("serverError");
-                    if (languages== null) {
+                    if (languages == null) {
                         Toast.makeText(activity, serverError, Toast.LENGTH_SHORT).show();
                     } else {
                         List<String> availableLangCodes = new ArrayList<>();
                         String[] str = languages.split(",");
-                        for (String s : str){
+                        for (String s : str) {
                             if (!s.equals(""))
                                 availableLangCodes.add(s);
                         }
@@ -114,14 +120,14 @@ public class MainActivity extends AppCompatActivity {
                                 .apply();
 
                         List<String> lang = new ArrayList<>();
-                        String[] strings=getResources().getStringArray(R.array.Lang);
+                        String[] strings = getResources().getStringArray(R.array.Lang);
                         Collections.addAll(lang, strings);
                         //If selected language is not found in newly retrieved languages, replace with default value in UI
-                        if (binding.SourceLanguageTop.getText() == "" || ! availableLangCodes.contains(getResources().getStringArray(R.array.LangCodes)[lang.indexOf(binding.SourceLanguageTop.getText())])) {
+                        if (binding.SourceLanguageTop.getText() == "" || !availableLangCodes.contains(getResources().getStringArray(R.array.LangCodes)[lang.indexOf(binding.SourceLanguageTop.getText())])) {
                             sourceLangId = 0;
                             setSourceLang();
                         }
-                        if (binding.TargetLanguageTop.getText() == "" || ! availableLangCodes.contains(getResources().getStringArray(R.array.LangCodes)[lang.indexOf(binding.TargetLanguageTop.getText())])) {
+                        if (binding.TargetLanguageTop.getText() == "" || !availableLangCodes.contains(getResources().getStringArray(R.array.LangCodes)[lang.indexOf(binding.TargetLanguageTop.getText())])) {
                             targetLangId = 3;
                             setTargetLang();
                         }
@@ -129,27 +135,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
+
         binding.SourceText.addTextChangedListener(new TextWatcher() {
-            private static final int delay_millis  = 750;
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            private static final int delay_millis = 750;
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            }
+
             final Handler handler = new Handler(Looper.getMainLooper());
             final Runnable workRunnable = () -> translateText();
+
             @Override
             public void afterTextChanged(Editable editable) {
                 handler.removeCallbacks(workRunnable);
-                handler.postDelayed(workRunnable,delay_millis);
+                handler.postDelayed(workRunnable, delay_millis);
                 binding.translationPending.setVisibility(View.VISIBLE);
                 if (editable.toString().equals(""))
                     binding.translationPending.setVisibility(View.GONE);
             }
         });
+
         binding.RemoveSourceText.setOnClickListener(view -> {
-            if(!binding.SourceText.getText().toString().equals("")){
-                if (settings.getBoolean("ask", true)){
+            if (!binding.SourceText.getText().toString().equals("")) {
+                if (settings.getBoolean("ask", true)) {
                     new MaterialAlertDialogBuilder(activity, R.style.AlertDialog)
                             .setMessage(getString(R.string.rlyRemoveText))
                             .setPositiveButton("Remove", (dialogInterface, i) -> {
@@ -166,20 +179,20 @@ public class MainActivity extends AppCompatActivity {
                                 dialogInterface.dismiss();
                             })
                             .show();
-                }else {
+                } else {
                     binding.SourceText.setText("");
                     binding.TranslatedTV.setText("");
                 }
-                InputMethodManager imm = (InputMethodManager)getSystemService(Activity.INPUT_METHOD_SERVICE);
+                InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                 View view1 = getCurrentFocus();
-                imm.hideSoftInputFromWindow(view1.getWindowToken(),0);
+                imm.hideSoftInputFromWindow(view1.getWindowToken(), 0);
             }
 
         });
 
         binding.CopyTranslation.setOnClickListener(view -> {
-            if (!binding.TranslatedTV.getText().toString().equals("")){
-                ClipboardManager clipboard = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+            if (!binding.TranslatedTV.getText().toString().equals("")) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("translated text", binding.TranslatedTV.getText());
                 clipboard.setPrimaryClip(clip);
                 Snackbar.make(
@@ -189,18 +202,6 @@ public class MainActivity extends AppCompatActivity {
                 ).show();
             }
         });
-
-        /*
-        binding.ShareTranslation.setOnClickListener(view -> {
-            if (!binding.TranslatedTV.getText().toString().equals("")){
-                startActivity(Intent.createChooser(new Intent(),null)
-                        .setAction(Intent.ACTION_SEND)
-                        .setType("text/plain")
-                        .putExtra(Intent.EXTRA_TEXT,binding.TranslatedTV.getText())
-                );
-            }
-        });
-         */
 
         binding.SwitchLanguages.setOnClickListener(view -> {
             int cacheLang = sourceLangId;
@@ -215,28 +216,13 @@ public class MainActivity extends AppCompatActivity {
 
         binding.TargetLanguageBot.setOnClickListener(view -> chooseLang(false));
 
-        /*
-        //theme switcher
-        binding.themeSwitcher.setOnClickListener(view -> {
-            int newTheme = settings.getInt("Theme", 1) + 1;
-            if (newTheme == 5) {
-                newTheme = 0;
-            }
-            settings.edit()
-                    .putInt("Theme", newTheme)
-                    .apply();
-            finish();
-            startActivity(intent);
-        });
-         */
-
         //About dialog
         binding.info.setOnClickListener(view -> {
-            View about = getLayoutInflater().inflate(R.layout.about,null);
+            View about = getLayoutInflater().inflate(R.layout.about, null);
             EditText serverET = about.findViewById(R.id.Server);
             EditText apiET = about.findViewById(R.id.Api);
             final String[] server = {settings.getString("server", "https://libretranslate.de")};
-            String apiKey = settings.getString("apiKey","");
+            String apiKey = settings.getString("apiKey", "");
             serverET.setText(server[0]);
             apiET.setText(apiKey);
             AlertDialog.Builder popUp = new AlertDialog.Builder(activity, R.style.AlertDialog);
@@ -244,10 +230,6 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle(getString(R.string.about_title))
                     .setPositiveButton("Save", (dialogInterface, i) -> {
                         server[0] = serverET.getText().toString();
-//                                .replace("http://", "")
-//                                .replace("https://", "")
-//                                .replace("www.", "")
-//                                .replace("/translate", "");
                         settings.edit()
                                 .putString("server", server[0])
                                 .putString("apiKey", apiET.getText().toString())
@@ -260,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                     })
-                    .setNegativeButton(getString(R.string.close),null)
+                    .setNegativeButton(getString(R.string.close), null)
                     .show();
         });
     }
@@ -269,53 +251,53 @@ public class MainActivity extends AppCompatActivity {
         String server = settings.getString("server", "https://libretranslate.de");
         final String[] languages = {""};
         final String[] serverError = {""};
-        URL url = new URL(server+"/languages");
-        HttpURLConnection connection = server.contains("https")?(HttpsURLConnection) url.openConnection(): (HttpURLConnection) url.openConnection();
+        URL url = new URL(server + "/languages");
+        HttpURLConnection connection = server.startsWith("https") ?
+                (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("accept", "application/json");
-        Thread thread= new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 InputStream inputStream = connection.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                 JSONArray jsonArray = new JSONArray(reader.readLine());
                 StringBuilder languagesSB = new StringBuilder();
                 List<String> lsb = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.LangCodes)));
-                for (int i = 0;i<jsonArray.length();i++){
+                for (int i = 0; i < jsonArray.length(); i++) {
                     String langCode = jsonArray.getJSONObject(i).getString("code");
                     if (lsb.contains(langCode))
                         languagesSB.append(langCode).append(",");
-                    else{
+                    else {
                         Bundle bundle = new Bundle();
-                        bundle.putString("lc",langCode);
+                        bundle.putString("lc", langCode);
                         Message msg = new Message();
                         msg.setData(bundle);
                         msg.what = 1;
                         mhandler.sendMessage(msg);
                     }
                 }
-                if(languagesSB.length()!=0)
-                    languagesSB.setLength(languagesSB.length()-1);
+                if (languagesSB.length() != 0)
+                    languagesSB.setLength(languagesSB.length() - 1);
                 languages[0] = languagesSB.toString();
             } catch (Exception e) {
                 e.printStackTrace();
                 try {
-                        serverError[0] = new JSONObject(String.valueOf(connection.getErrorStream().read())).getString("error");
-                    }
-                catch(Exception ee) {
+                    serverError[0] = new JSONObject(String.valueOf(connection.getErrorStream().read())).getString("error");
+                } catch (Exception ee) {
                     ee.printStackTrace();
                     getString(R.string.netError);
                 }
-            }finally {
-                    connection.disconnect();
+            } finally {
+                connection.disconnect();
             }
             Bundle bundle = new Bundle();
-            bundle.putString("languages",languages[0]);
-            bundle.putString("serverError",serverError[0]);
+            bundle.putString("languages", languages[0]);
+            bundle.putString("serverError", serverError[0]);
             Message msg = new Message();
             msg.setData(bundle);
             msg.what = 3;
             mhandler.sendMessage(msg);
-    });
+        });
         thread.start();
     }
 
@@ -325,35 +307,35 @@ public class MainActivity extends AppCompatActivity {
         final String[][] serverError = {{""}};
         final String[] transString = {""};
         List<String> availableLangCodes = new ArrayList<>();
-        if (!(binding.SourceText.getText().toString().equals("") || languages.equals(""))){//fix
+        if (!(binding.SourceText.getText().toString().equals("") || languages.equals(""))) {//fix
             String server = settings.getString("server", "https://libretranslate.de");
             String apiKey = settings.getString("apiKey", "");
             HttpURLConnection connection = null;
             try {
-                URL url = new URL(server+"/translate");
+                URL url = new URL(server + "/translate");
                 String[] str = languages.split(",");
                 Collections.addAll(availableLangCodes, str);
-                connection = server.contains("https")?(HttpsURLConnection) url.openConnection(): (HttpURLConnection) url.openConnection();
+                connection = server.contains("https") ? (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (connection!=null){
+            if (connection != null) {
                 connection.setRequestProperty("accept", "application/json");
             }
-            String q = binding.SourceText.getText().toString().replace("&","%26");
+            String q = binding.SourceText.getText().toString().replace("&", "%26");
             String source = availableLangCodes.get(sourceLangId);
             String target = availableLangCodes.get(targetLangId);
-            String data = "q="+q+"&source="+source+"&target="+target;
-            if (!apiKey.equals("")){
-                data += "&api_key="+apiKey;
+            String data = "q=" + q + "&source=" + source + "&target=" + target;
+            if (!apiKey.equals("")) {
+                data += "&api_key=" + apiKey;
             }
             byte[] out = data.getBytes(StandardCharsets.UTF_8);
             HttpURLConnection finalConnection = connection;
             Thread thread = new Thread(() -> {
                 try {
-                    if (finalConnection !=null){
+                    if (finalConnection != null) {
                         OutputStream stream = finalConnection.getOutputStream();
                         stream.write(out);
                         InputStream inputStream = new DataInputStream(finalConnection.getInputStream());
@@ -364,18 +346,17 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                     transString[0] = null;
                     try {
-                            serverError[0][0] = new JSONObject(String.valueOf(finalConnection.getErrorStream().read())).getString("error");
-                        }
-                    catch(Exception ee) {
+                        serverError[0][0] = new JSONObject(String.valueOf(finalConnection.getErrorStream().read())).getString("error");
+                    } catch (Exception ee) {
                         ee.printStackTrace();
                         getString(R.string.netError);
                     }
-                }finally {
+                } finally {
                     finalConnection.disconnect();
                 }
                 Bundle bundle = new Bundle();
-                bundle.putString("transString",transString[0]);
-                bundle.putString("serverError",serverError[0][0]);
+                bundle.putString("transString", transString[0]);
+                bundle.putString("serverError", serverError[0][0]);
                 Message msg = new Message();
                 msg.setData(bundle);
                 msg.what = 2;
@@ -385,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setSourceLang(){
+    private void setSourceLang() {
         String languages = settings.getString("languages", "");
         if (!languages.equals("")) {
             String[] str = languages.split(",");
@@ -409,7 +390,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setTargetLang(){
+    private void setTargetLang() {
         String languages = settings.getString("languages", "");
         if (!languages.equals("")) {
             String[] str = languages.split(",");
@@ -433,7 +414,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void chooseLang(Boolean source){
+    private void chooseLang(Boolean source) {
         String languages = settings.getString("languages", "");
         List<String> availableLangs = new ArrayList<>();
         //Check if available languages exist in strings.xml. If so, place in availableLangs list
@@ -442,7 +423,7 @@ public class MainActivity extends AppCompatActivity {
             List<String> list = new ArrayList<>();
             Collections.addAll(availableLangCodes, languages.split(","));
             Collections.addAll(list, getResources().getStringArray(R.array.LangCodes));
-            for (int i = 0;i<availableLangCodes.size();i++){
+            for (int i = 0; i < availableLangCodes.size(); i++) {
                 availableLangs.add(
                         getResources().getStringArray(R.array.Lang)[list
                                 .indexOf(availableLangCodes.get(i))]
@@ -451,8 +432,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         new AlertDialog.Builder(
-                        this, R.style.AlertDialog
-                )
+                this, R.style.AlertDialog
+        )
                 .setTitle(getString(R.string.chooseLang))
                 .setItems(availableLangs.toArray(new String[availableLangs.size()]), (dialog, which) -> {
                     if (source) {
