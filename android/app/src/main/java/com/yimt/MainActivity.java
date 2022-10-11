@@ -29,14 +29,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.net.HttpURLConnection;
 import javax.net.ssl.HttpsURLConnection;
+
 
 public class MainActivity extends AppCompatActivity {
     private SharedPreferences settings;
@@ -269,28 +270,12 @@ public class MainActivity extends AppCompatActivity {
         final String[] languages = {""};
         final String[] serverError = {""};
         URL url = new URL(server+"/languages");
-        HttpsURLConnection connection_https = null;
-        HttpURLConnection connection_http = null;
-        if (server.contains("https")){
-            connection_https = (HttpsURLConnection)url.openConnection();
-            connection_https.setRequestMethod("GET");
-            connection_https.setRequestProperty("accept", "application/json");
-        }
-        else{
-            connection_http = (HttpURLConnection) url.openConnection();
-            connection_http.setRequestMethod("GET");
-            connection_http.setRequestProperty("accept", "application/json");
-        }
-
-        HttpsURLConnection finalConnection_https = connection_https;
-        HttpURLConnection finalConnection_http = connection_http;
+        HttpURLConnection connection = server.contains("https")?(HttpsURLConnection) url.openConnection(): (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("accept", "application/json");
         Thread thread= new Thread(() -> {
             try {
-                InputStream inputStream;
-                if (server.contains("https"))
-                    inputStream = finalConnection_https.getInputStream();
-                else
-                    inputStream = finalConnection_http.getInputStream();
+                InputStream inputStream = connection.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                 JSONArray jsonArray = new JSONArray(reader.readLine());
                 StringBuilder languagesSB = new StringBuilder();
@@ -314,20 +299,14 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
                 try {
-                    if (server.contains("https"))
-                        serverError[0] = new JSONObject(String.valueOf(finalConnection_https.getErrorStream().read())).getString("error");
-                    else
-                        serverError[0] = new JSONObject(String.valueOf(finalConnection_http.getErrorStream().read())).getString("error");
-                }
+                        serverError[0] = new JSONObject(String.valueOf(connection.getErrorStream().read())).getString("error");
+                    }
                 catch(Exception ee) {
                     ee.printStackTrace();
                     getString(R.string.netError);
                 }
             }finally {
-                if (server.contains("https"))
-                    finalConnection_https.disconnect();
-                else
-                    finalConnection_http.disconnect();
+                    connection.disconnect();
             }
             Bundle bundle = new Bundle();
             bundle.putString("languages",languages[0]);
@@ -349,28 +328,19 @@ public class MainActivity extends AppCompatActivity {
         if (!(binding.SourceText.getText().toString().equals("") || languages.equals(""))){//fix
             String server = settings.getString("server", "https://libretranslate.de");
             String apiKey = settings.getString("apiKey", "");
-            HttpsURLConnection connection_https = null;
-            HttpURLConnection connection_http = null;
+            HttpURLConnection connection = null;
             try {
                 URL url = new URL(server+"/translate");
                 String[] str = languages.split(",");
                 Collections.addAll(availableLangCodes, str);
-                if (server.contains("https")){
-                    connection_https = (HttpsURLConnection)url.openConnection();
-                    connection_https.setRequestMethod("POST");
-                } else{
-                    connection_http = (HttpURLConnection)url.openConnection();
-                    connection_http.setRequestMethod("POST");
-                }
+                connection = server.contains("https")?(HttpsURLConnection) url.openConnection(): (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (connection_https!=null){
-                connection_https.setRequestProperty("accept", "application/json");
-            }
-            if (connection_http!=null){
-                connection_http.setRequestProperty("accept", "application/json");
+            if (connection!=null){
+                connection.setRequestProperty("accept", "application/json");
             }
             String q = binding.SourceText.getText().toString().replace("&","%26");
             String source = availableLangCodes.get(sourceLangId);
@@ -380,22 +350,13 @@ public class MainActivity extends AppCompatActivity {
                 data += "&api_key="+apiKey;
             }
             byte[] out = data.getBytes(StandardCharsets.UTF_8);
-
-            HttpsURLConnection finalConnection_https = connection_https;
-            HttpURLConnection finalConnection_http = connection_http;
+            HttpURLConnection finalConnection = connection;
             Thread thread = new Thread(() -> {
                 try {
-                    if (finalConnection_https !=null){
-                        OutputStream stream = finalConnection_https.getOutputStream();
+                    if (finalConnection !=null){
+                        OutputStream stream = finalConnection.getOutputStream();
                         stream.write(out);
-                        InputStream inputStream = new DataInputStream(finalConnection_https.getInputStream());
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-                        transString[0] = new JSONObject(reader.readLine()).getString("translatedText");
-                    }
-                    if (finalConnection_http !=null){
-                        OutputStream stream = finalConnection_http.getOutputStream();
-                        stream.write(out);
-                        InputStream inputStream = new DataInputStream(finalConnection_http.getInputStream());
+                        InputStream inputStream = new DataInputStream(finalConnection.getInputStream());
                         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                         transString[0] = new JSONObject(reader.readLine()).getString("translatedText");
                     }
@@ -403,20 +364,14 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                     transString[0] = null;
                     try {
-                        if (server.contains("https"))
-                            serverError[0][0] = new JSONObject(String.valueOf(finalConnection_https.getErrorStream().read())).getString("error");
-                        else
-                            serverError[0][0] = new JSONObject(String.valueOf(finalConnection_http.getErrorStream().read())).getString("error");
-                    }
+                            serverError[0][0] = new JSONObject(String.valueOf(finalConnection.getErrorStream().read())).getString("error");
+                        }
                     catch(Exception ee) {
                         ee.printStackTrace();
                         getString(R.string.netError);
                     }
                 }finally {
-                    if (server.contains("https"))
-                        finalConnection_https.disconnect();
-                    else
-                        finalConnection_http.disconnect();
+                    finalConnection.disconnect();
                 }
                 Bundle bundle = new Bundle();
                 bundle.putString("transString",transString[0]);
