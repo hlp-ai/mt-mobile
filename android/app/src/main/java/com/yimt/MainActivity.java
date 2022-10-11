@@ -371,16 +371,16 @@ public class MainActivity extends AppCompatActivity {
     private void setSourceLang() {
         String languages = settings.getString("languages", "");
         if (!languages.equals("")) {
-            String[] str = languages.split(",");
+            String[] serverLangCodes = languages.split(",");
             List<String> availableLangCodes = new ArrayList<>();
-            List<String> list = new ArrayList<>();
-            Collections.addAll(availableLangCodes, str);
+            List<String> localLangCodes = new ArrayList<>();
+            Collections.addAll(availableLangCodes, serverLangCodes);
             if (availableLangCodes.size() <= sourceLangId)
                 sourceLangId = 0;
-            Collections.addAll(list, getResources().getStringArray(R.array.LangCodes));
+            Collections.addAll(localLangCodes, getResources().getStringArray(R.array.LangCodes));
 
             String sourceLang =
-                    getResources().getStringArray(R.array.Lang)[list
+                    getResources().getStringArray(R.array.Lang)[localLangCodes
                             .indexOf(
                                     availableLangCodes.get(sourceLangId)
                             )];
@@ -395,16 +395,16 @@ public class MainActivity extends AppCompatActivity {
     private void setTargetLang() {
         String languages = settings.getString("languages", "");
         if (!languages.equals("")) {
-            String[] str = languages.split(",");
+            String[] serverLangCodes = languages.split(",");
             List<String> availableLangCodes = new ArrayList<>();
-            List<String> list = new ArrayList<>();
-            Collections.addAll(availableLangCodes, str);
+            List<String> localLangCodes = new ArrayList<>();
+            Collections.addAll(availableLangCodes, serverLangCodes);
             if (availableLangCodes.size() <= targetLangId)
                 targetLangId = 0;
-            Collections.addAll(list, getResources().getStringArray(R.array.LangCodes));
+            Collections.addAll(localLangCodes, getResources().getStringArray(R.array.LangCodes));
 
             String targetLang =
-                    getResources().getStringArray(R.array.Lang)[list
+                    getResources().getStringArray(R.array.Lang)[localLangCodes
                             .indexOf(
                                     availableLangCodes.get(targetLangId)
                             )];
