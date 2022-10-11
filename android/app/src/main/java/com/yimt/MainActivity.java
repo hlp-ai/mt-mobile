@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
             targetLangId = settings.getInt("Target", 3);
             setTargetLang();
         }
+
         Intent intent = getIntent();
         if (intent.getAction().equals(Intent.ACTION_SEND)) {
             if (intent.getExtras() != null) {
@@ -84,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
             }
             translateText();
         }
+
         new Handler(Looper.getMainLooper());
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
@@ -137,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         binding.SourceText.addTextChangedListener(new TextWatcher() {
-            private static final int delay_millis = 750;
+            private static final int DELAY_MILLIS = 750;
 
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -153,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable editable) {
                 handler.removeCallbacks(workRunnable);
-                handler.postDelayed(workRunnable, delay_millis);
+                handler.postDelayed(workRunnable, DELAY_MILLIS);
                 binding.translationPending.setVisibility(View.VISIBLE);
                 if (editable.toString().equals(""))
                     binding.translationPending.setVisibility(View.GONE);
@@ -315,9 +317,9 @@ public class MainActivity extends AppCompatActivity {
                 URL url = new URL(server + "/translate");
                 String[] str = languages.split(",");
                 Collections.addAll(availableLangCodes, str);
-                connection = server.contains("https") ? (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+                connection = server.startsWith("https") ?
+                        (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
