@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 if (msg.what == 1) {
                     Bundle lc = msg.getData();
                     String langCode = lc.getString("lc");
-                    Toast.makeText(activity, getString(R.string.langError, langCode), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, getString(R.string.langError, langCode), Toast.LENGTH_LONG).show();
                 } else if (msg.what == 2) {
                     Bundle lc = msg.getData();
                     String transString = lc.getString("transString");
@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
                     String languages = lc.getString("languages");
                     String serverError = lc.getString("serverError");
                     if (languages == null) {
-                        Toast.makeText(activity, serverError, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, serverError, Toast.LENGTH_LONG).show();
                     } else {
                         List<String> availableLangCodes = new ArrayList<>();
                         String[] str = languages.split(",");
@@ -256,6 +256,10 @@ public class MainActivity extends AppCompatActivity {
         URL url = new URL(server + "/languages");
         HttpURLConnection connection = server.startsWith("https") ?
                 (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+        final int CONN_TIMEOUT = 15000;
+        final int READ_TIMEOUT = 15000;
+        connection.setConnectTimeout(CONN_TIMEOUT);
+        connection.setReadTimeout(READ_TIMEOUT);
         connection.setRequestMethod("GET");
         connection.setRequestProperty("accept", "application/json");
         Thread thread = new Thread(() -> {
@@ -264,10 +268,10 @@ public class MainActivity extends AppCompatActivity {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                 JSONArray jsonArray = new JSONArray(reader.readLine());
                 StringBuilder languagesSB = new StringBuilder();
-                List<String> lsb = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.LangCodes)));
+                List<String> localLangCodes = new ArrayList<>(Arrays.asList(getResources().getStringArray(R.array.LangCodes)));
                 for (int i = 0; i < jsonArray.length(); i++) {
                     String langCode = jsonArray.getJSONObject(i).getString("code");
-                    if (lsb.contains(langCode))
+                    if (localLangCodes.contains(langCode))
                         languagesSB.append(langCode).append(",");
                     else {
                         Bundle bundle = new Bundle();
