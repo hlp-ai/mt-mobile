@@ -5,7 +5,6 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -129,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         binding.SourceText.addTextChangedListener(new TextWatcher() {
-            private static final int DELAY_MILLIS = 750;
+            private static final int DELAY_MILLIS = 5000;
 
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
