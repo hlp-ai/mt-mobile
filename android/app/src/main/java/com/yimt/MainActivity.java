@@ -153,27 +153,9 @@ public class MainActivity extends AppCompatActivity {
 
         binding.RemoveSourceText.setOnClickListener(view -> {
             if (!binding.SourceText.getText().toString().equals("")) {
-                if (settings.getBoolean("ask", true)) {
-                    new MaterialAlertDialogBuilder(activity, R.style.AlertDialog)
-                            .setMessage(getString(R.string.rlyRemoveText))
-                            .setPositiveButton("Remove", (dialogInterface, i) -> {
-                                binding.SourceText.setText("");
-                                binding.TranslatedTV.setText("");
-                                dialogInterface.dismiss();
-                            })
-                            .setNeutralButton(getString(R.string.neverAskAgain), (dialogInterface, i) -> {
-                                settings.edit()
-                                        .putBoolean("ask", false)
-                                        .apply();
-                                binding.SourceText.setText("");
-                                binding.TranslatedTV.setText("");
-                                dialogInterface.dismiss();
-                            })
-                            .show();
-                } else {
-                    binding.SourceText.setText("");
-                    binding.TranslatedTV.setText("");
-                }
+                binding.SourceText.setText("");
+                binding.TranslatedTV.setText("");
+
                 InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                 View view1 = getCurrentFocus();
                 imm.hideSoftInputFromWindow(view1.getWindowToken(), 0);
