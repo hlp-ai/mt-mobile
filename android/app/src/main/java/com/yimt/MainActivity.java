@@ -76,15 +76,6 @@ public class MainActivity extends AppCompatActivity {
             setTargetLang();
         }
 
-        Intent intent = getIntent();
-        if (intent.getAction().equals(Intent.ACTION_SEND)) {
-            if (intent.getExtras() != null) {
-                String s = getString(Integer.parseInt(Intent.EXTRA_TEXT));
-                binding.SourceText.setText(s);
-            }
-            translateText();
-        }
-
         new Handler(Looper.getMainLooper());
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
