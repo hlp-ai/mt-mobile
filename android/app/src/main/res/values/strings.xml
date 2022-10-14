@@ -20,7 +20,7 @@
     <string name="save">Save</string>
     <string name="abort">Abort</string>
     <string name="netError">Connection to server failed - check your internet connection</string>
-    <string name="langError">\"%s\" is not a valid language - please report this if this is an actual language code</string>
+    <string name="langError">\"%s\" is not a valid language</string>
 
     <string name="about_title">YiMT Setting</string>
     <string name="addCustomServer">Server URL :</string>
@@ -33,8 +33,6 @@
     <string name="created_by">Created by <a href="https://codeberg.org/BeoCode/LibreTranslator">BeoCode</a> licensed under <a href="https://codeberg.org/BeoCode/LibreTranslator/src/branch/main/LICENSE">EUPL-1.2</a></string>
     <string name="close">Close</string>
     <string name="translate">翻译</string>
-
-
 
     <string-array name="Lang">
         <item>Arabic</item>
