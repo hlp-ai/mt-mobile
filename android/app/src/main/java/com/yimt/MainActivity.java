@@ -58,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         MainActivity activity = this;
         settings = getSharedPreferences("com.yimt", 0);
-        setTheme(R.style.LightTheme);
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
