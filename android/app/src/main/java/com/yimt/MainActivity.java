@@ -78,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
             setTargetLang();
         }
 
-//        new Handler(Looper.getMainLooper());
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
