@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
             setTargetLang();
         }
 
-        new Handler(Looper.getMainLooper());
+//        new Handler(Looper.getMainLooper());
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                     Bundle lc = msg.getData();
                     String transString = lc.getString("transString");
                     String serverError = lc.getString("serverError");
-                    if (transString == null)
+                    if (transString.isEmpty() && serverError.length()>0)
                         Toast.makeText(activity, serverError, Toast.LENGTH_LONG).show();
                     binding.TranslatedTV.setText(transString);
                     binding.translationPending.setVisibility(View.GONE);
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                     Bundle lc = msg.getData();
                     String languages = lc.getString("languages");
                     String serverError = lc.getString("serverError");
-                    if (languages == null) {
+                    if (languages.isEmpty() && serverError.length()>0) {
                         Toast.makeText(activity, serverError, Toast.LENGTH_LONG).show();
                     } else {
                         //Setting languages needs to happen before setSourceLang and setTargetLang
@@ -257,20 +257,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void retrieveLanguages() throws Exception {
         String server = settings.getString("server", DEFAULT_SERVER);
-        final String[] languages = {""};
-        final String[] serverError = {""};
 
         Thread thread = new Thread(() -> {
+            String languages = "";
+            String error = "";
             try {
-                languages[0] = requestLanguages(server);
+                languages = requestLanguages(server);
             } catch (Exception e) {
                 e.printStackTrace();
-                serverError[0] = e.toString();
+                error = e.toString();
             }
 
             Bundle bundle = new Bundle();
-            bundle.putString("languages", languages[0]);
-            bundle.putString("serverError", serverError[0]);
+            bundle.putString("languages", languages);
+            bundle.putString("serverError", error);
             Message msg = new Message();
             msg.setData(bundle);
             msg.what = LANGUAGES;
@@ -318,25 +318,23 @@ public class MainActivity extends AppCompatActivity {
 
     private void translateText() {
         String languages = settings.getString("languages", "");
-        final String[][] serverError = {{""}};
-        final String[] transString = {""};
         if (!(binding.SourceText.getText().toString().equals("") || languages.equals(""))) {//fix
             String server = settings.getString("server", DEFAULT_SERVER);
             String apiKey = settings.getString("apiKey", "");
 
             Thread thread = new Thread(() -> {
+                String translation = "";
+                String error = "";
                 try {
-                    String translation = requestTranslate(server, apiKey);
-                    transString[0] = translation;
+                    translation = requestTranslate(server, apiKey);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    transString[0] = null;
-                    serverError[0][0] = e.toString();
+                    error = e.toString();
                 }
 
                 Bundle bundle = new Bundle();
-                bundle.putString("transString", transString[0]);
-                bundle.putString("serverError", serverError[0][0]);
+                bundle.putString("transString", translation);
+                bundle.putString("serverError", error);
                 Message msg = new Message();
                 msg.setData(bundle);
                 msg.what = TRANSLATE;
