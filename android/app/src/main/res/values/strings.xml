@@ -34,27 +34,4 @@
     <string name="close">Close</string>
     <string name="translate">翻译</string>
 
-    <string-array name="Lang">
-        <item>Chinese</item>
-        <item>English</item>
-        <item>French</item>
-        <item>German</item>
-        <item>Japanese</item>
-        <item>Korean</item>
-        <item>Russian</item>
-        <item>Spanish</item>
-        <item>Vietnamese</item>
-    </string-array>
-
-    <string-array name="LangCodes">
-        <item>zh</item>
-        <item>en</item>
-        <item>fr</item>
-        <item>de</item>
-        <item>ja</item>
-        <item>ko</item>
-        <item>ru</item>
-        <item>es</item>
-        <item>vi</item>
-    </string-array>
 </resources>
