@@ -34,19 +34,6 @@
                 app:drawableRightCompat="@drawable/settings"
                 app:drawableTint="?attr/colorPrimary" />
 
-<!--            <Button-->
-<!--                android:id="@+id/themeSwitcher"-->
-<!--                android:layout_width="33dp"-->
-<!--                android:layout_height="33dp"-->
-<!--                android:layout_alignParentEnd="true"-->
-<!--                android:layout_alignParentRight="true"-->
-<!--                android:layout_marginStart="21dp"-->
-<!--                android:layout_marginTop="21dp"-->
-<!--                android:layout_marginEnd="21dp"-->
-<!--                android:layout_marginBottom="21dp"-->
-<!--                android:background="@drawable/theme_round_button"-->
-<!--                android:contentDescription="@string/switch_theme" />-->
-
         </RelativeLayout>
 
         <LinearLayout
