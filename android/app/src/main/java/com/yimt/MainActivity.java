@@ -109,28 +109,40 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        binding.SourceText.addTextChangedListener(new TextWatcher() {
-            private static final int DELAY_MILLIS = 5000;
+        boolean translate_on_input = false;
+        if (translate_on_input) {
+            binding.SourceText.addTextChangedListener(new TextWatcher() {
+                private static final int DELAY_MILLIS = 4000;
 
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-            final Handler handler = new Handler(Looper.getMainLooper());
-            final Runnable workRunnable = () -> translateText();
+                final Handler handler = new Handler(Looper.getMainLooper());
+                final Runnable workRunnable = () -> translateText();
 
-            @Override
-            public void afterTextChanged(Editable editable) {
-                handler.removeCallbacks(workRunnable);
-                handler.postDelayed(workRunnable, DELAY_MILLIS);
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    handler.removeCallbacks(workRunnable);
+                    handler.postDelayed(workRunnable, DELAY_MILLIS);
+                    binding.translationPending.setVisibility(View.VISIBLE);
+                    if (editable.toString().equals(""))
+                        binding.translationPending.setVisibility(View.GONE);
+                }
+            });
+        }
+
+        // Translate button
+        binding.StartTranslation.setOnClickListener(view -> {
+            if (!binding.SourceText.getText().toString().equals("")) {
+                translateText();
                 binding.translationPending.setVisibility(View.VISIBLE);
-                if (editable.toString().equals(""))
-                    binding.translationPending.setVisibility(View.GONE);
             }
+
         });
 
         // Remove button

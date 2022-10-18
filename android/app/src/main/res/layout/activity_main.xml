@@ -107,20 +107,18 @@
                     android:layout_toLeftOf="@id/CopyTranslation"
                     android:textSize="20sp" />
 
-<!--                <Button-->
-<!--                    android:id="@+id/StartTranslation"-->
-<!--                    android:layout_width="100dp"-->
-<!--                    android:layout_height="50dp"-->
-<!--                    android:layout_centerVertical="true"-->
-<!--                    android:layout_marginVertical="20dp"-->
-<!--                    android:layout_toStartOf="@+id/CopyTranslation"-->
-<!--                    android:layout_toLeftOf="@+id/CopyTranslation"-->
-<!--                    android:background="#00FFFFFF"-->
-<!--                    android:text="@string/translate"-->
-<!--                    android:textSize="25dp"-->
-<!--                    android:textStyle="bold">-->
+                <Button
+                    android:id="@+id/StartTranslation"
+                    android:layout_width="100dp"
+                    android:layout_height="50dp"
+                    android:layout_centerVertical="true"
+                    android:layout_marginVertical="20dp"
+                    android:layout_toStartOf="@+id/CopyTranslation"
+                    android:layout_toLeftOf="@+id/CopyTranslation"
+                    android:background="#00FFFFFF"
+                    android:text="@string/translate"
+                    android:textSize="20sp" />
 
-<!--                </Button>-->
                 <ImageButton
                     android:id="@+id/CopyTranslation"
                     android:layout_width="60dp"
