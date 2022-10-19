@@ -7,8 +7,6 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import com.google.android.material.snackbar.Snackbar;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -16,22 +14,30 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import com.yimt.databinding.ActivityMainBinding;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.snackbar.Snackbar;
+import com.yimt.databinding.ActivityMainBinding;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.net.HttpURLConnection;
+import java.util.Map;
+
 import javax.net.ssl.HttpsURLConnection;
 
 
@@ -387,11 +393,14 @@ public class MainActivity extends AppCompatActivity {
     private void chooseLang(Boolean source) {
         String languages = settings.getString("languages", "");
         ArrayList<String> langCodes = new ArrayList<String>();
-        langCodes.add("auto");
+        langCodes.add(AUTO_LANG_CODE);
+        ArrayList<String> langNames = new ArrayList<String>();
+        langNames.add(AUTO_LANG_NAME);
         if (!languages.equals("")) {
             HashMap<String, String> langMap = getLanguageMap(languages);
-            for (String c: langMap.keySet()){
-                langCodes.add(c);
+            for (Map.Entry<String, String> e: langMap.entrySet()){
+                langCodes.add(e.getKey());
+                langNames.add(e.getValue());
             }
         }
 
@@ -400,7 +409,7 @@ public class MainActivity extends AppCompatActivity {
                     this, R.style.AlertDialog
             )
                     .setTitle(getString(R.string.chooseLang))
-                    .setItems(langCodes.toArray(new String[langCodes.size()]), (dialog, which) -> {
+                    .setItems(langNames.toArray(new String[langNames.size()]), (dialog, which) -> {
                         String c = langCodes.get(which);
                         sourceLangCode = c;
                         setSourceLang();
@@ -412,11 +421,12 @@ public class MainActivity extends AppCompatActivity {
         }
         else {
             langCodes.remove(0);
+            langNames.remove(0);
             new AlertDialog.Builder(
                     this, R.style.AlertDialog
             )
                     .setTitle(getString(R.string.chooseLang))
-                    .setItems(langCodes.toArray(new String[langCodes.size()]), (dialog, which) -> {
+                    .setItems(langNames.toArray(new String[langNames.size()]), (dialog, which) -> {
                         String c = langCodes.get(which);
                         targetLangCode = c;
                         setTargetLang();
