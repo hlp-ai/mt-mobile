@@ -207,8 +207,8 @@ public class MainActivity extends AppCompatActivity {
             apiET.setText(apiKey);
             AlertDialog.Builder popUp = new AlertDialog.Builder(activity, R.style.AlertDialog);
             popUp.setView(about)
-                    .setTitle(getString(R.string.about_title))
-                    .setPositiveButton("Save", (dialogInterface, i) -> {
+                    .setTitle(getString(R.string.settingTitle))
+                    .setPositiveButton(getString(R.string.save), (dialogInterface, i) -> {
                         server[0] = serverET.getText().toString();
                         settings.edit()
                                 .putString("server", server[0])
