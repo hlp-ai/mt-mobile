@@ -1,33 +1,52 @@
 package com.yimt;
 
+import static java.lang.Math.max;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Pair;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
+import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.yimt.databinding.ActivityMainBinding;
+import com.yimt.java.StillImageActivity;
+import com.yimt.java.textdetector.TextRecognitionProcessor;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -51,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
     final static int LANGUAGES = 1;
     final static int TRANSLATE = 2;
+    final static int TextRecog = 3;
 
     private final String AUTO_LANG_CODE = "auto";
     private final String AUTO_LANG_NAME = "AutoDetect";
@@ -60,6 +80,22 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
+    //add
+    private Uri imageUri;
+    private VisionImageProcessor imageProcessor;
+    private static final int REQUEST_IMAGE_CAPTURE = 1001;
+    private static final int REQUEST_CHOOSE_IMAGE = 1002;
+    private static final int REQUEST_CROP_IMAGE = 1003;
+    private static final String TAG = "StillImageActivity";
+    private static final String TEXT_RECOGNITION_LATIN = "Text Recognition Latin"; //en
+    private static final String TEXT_RECOGNITION_CHINESE = "Text Recognition Chinese (Beta)"; //zh
+    private static final String TEXT_RECOGNITION_DEVANAGARI = "Text Recognition Devanagari (Beta)"; //sa
+    private static final String TEXT_RECOGNITION_JAPANESE = "Text Recognition Japanese (Beta)"; //ja
+    private static final String TEXT_RECOGNITION_KOREAN = "Text Recognition Korean (Beta)"; //ko
+    private String selectedMode = TEXT_RECOGNITION_CHINESE;
+
+//    private static int REQ_Still = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,6 +104,29 @@ public class MainActivity extends AppCompatActivity {
         settings = getSharedPreferences("com.yimt", 0);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        createImageProcessor();
+        findViewById(R.id.select_image_button)
+                .setOnClickListener(
+                        view -> {
+                            // Menu for selecting either: a) take new photo b) select from existing
+                            PopupMenu popup = new PopupMenu(MainActivity.this, view);
+                            popup.setOnMenuItemClickListener(
+                                    menuItem -> {
+                                        int itemId = menuItem.getItemId();
+                                        if (itemId == R.id.select_images_from_local) {
+                                            startChooseImageIntentForResult();
+                                            return true;
+                                        } else if (itemId == R.id.take_photo_using_camera) {
+                                            startCameraIntentForResult();
+                                            return true;
+                                        }
+                                        return false;
+                                    });
+                            MenuInflater inflater = popup.getMenuInflater();
+                            inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
+                            popup.show();
+                        });
 
         try {
             retrieveLanguages();
@@ -111,6 +170,10 @@ public class MainActivity extends AppCompatActivity {
                         setSourceLang();
                         setTargetLang();
                     }
+                } else if (msg.what == TextRecog){
+                    Bundle data = msg.getData();
+                    String text = (String) data.get("translate_text");
+                    binding.SourceText.setText(text);
                 }
             }
         };
@@ -225,6 +288,164 @@ public class MainActivity extends AppCompatActivity {
                     .setNegativeButton(getString(R.string.close), null)
                     .show();
         });
+    }
+
+    private void startCameraIntentForResult() {
+        // Clean up last time's image
+        imageUri = null;
+//        preview.setImageBitmap(null);
+
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, "New Picture");
+            values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
+            imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    private void startChooseImageIntentForResult() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bitmap imageBitmap = null;
+            try {
+                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            crop(imageBitmap);
+        } else if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {
+            // In this case, imageUri is returned by the chooser, save it.
+            Bitmap imageBitmap = null;
+            imageUri = data.getData();
+            try {
+                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            crop(imageBitmap);
+        } else if(requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {
+            imageUri = data.getData();
+            tryReloadAndDetectInImage();
+        }
+        else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    //裁剪函数
+    private void crop(Bitmap bitmap){
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1","1"));
+        intent.setDataAndType(uri, "image/*");//设置要缩放的图片Uri和类型
+        intent.putExtra("crop", "true");
+        intent.putExtra("scale", true);//缩放
+        intent.putExtra("return-data", false);//当为true的时候就返回缩略图，false就不返回，需要通过Uri
+        intent.putExtra("noFaceDetection", false);//前置摄像头
+        startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
+    }
+
+    private void tryReloadAndDetectInImage() {
+        Log.d(TAG, "Try reload and detect image");
+        try {
+            if (imageUri == null) {
+                return;
+            }
+            Bitmap imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            if (imageBitmap == null) {
+                return;
+            }
+            if (imageProcessor != null) {
+                imageProcessor.processBitmap(imageBitmap);
+            } else {
+                Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error retrieving saved image");
+            imageUri = null;
+        }
+    }
+
+    private void createImageProcessor() {
+        if (imageProcessor != null) {
+            imageProcessor.stop();
+        }
+        try {
+            switch (selectedMode) {
+                case TEXT_RECOGNITION_LATIN:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(),mhandler);
+                    break;
+                case TEXT_RECOGNITION_CHINESE:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(
+                                    this, new ChineseTextRecognizerOptions.Builder().build(),mhandler);
+                    break;
+                case TEXT_RECOGNITION_DEVANAGARI:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(
+                                    this, new DevanagariTextRecognizerOptions.Builder().build(),mhandler);
+                    break;
+                case TEXT_RECOGNITION_JAPANESE:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(
+                                    this, new JapaneseTextRecognizerOptions.Builder().build(),mhandler);
+                    break;
+                case TEXT_RECOGNITION_KOREAN:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(),mhandler);
+                    break;
+                default:
+                    Log.e(TAG, "Unknown selectedMode: " + selectedMode);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Can not create image processor: " + selectedMode, e);
+            Toast.makeText(
+                            getApplicationContext(),
+                            "Can not create image processor: " + e.getMessage(),
+                            Toast.LENGTH_LONG)
+                    .show();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+        createImageProcessor();
+        tryReloadAndDetectInImage();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (imageProcessor != null) {
+            imageProcessor.stop();
+        }
     }
 
     private HashMap<String, String> getLanguageMap(String languages){
@@ -374,6 +595,14 @@ public class MainActivity extends AppCompatActivity {
             settings.edit()
                     .putString("Source", sourceLangCode)
                     .apply();
+            switch (sourceLangCode){
+                case "zh":selectedMode = TEXT_RECOGNITION_CHINESE;break;
+                case "en":selectedMode = TEXT_RECOGNITION_LATIN;break;
+                case "ko":selectedMode = TEXT_RECOGNITION_KOREAN;break;
+                case "ja":selectedMode = TEXT_RECOGNITION_JAPANESE;break;
+                case "sa":selectedMode = TEXT_RECOGNITION_DEVANAGARI;break;
+            }
+            createImageProcessor();
         }
     }
 
@@ -413,7 +642,6 @@ public class MainActivity extends AppCompatActivity {
                         String c = langCodes.get(which);
                         sourceLangCode = c;
                         setSourceLang();
-
                         translateText();
                     })
                     .setPositiveButton(getString(R.string.abort), (dialog, which) -> dialog.cancel())

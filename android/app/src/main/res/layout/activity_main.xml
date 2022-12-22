@@ -107,6 +107,17 @@
                     android:layout_toLeftOf="@id/CopyTranslation"
                     android:textSize="20sp" />
 
+                <ImageButton
+                    android:id="@+id/select_image_button"
+                    android:layout_width="70dp"
+                    android:layout_height="50dp"
+                    android:layout_centerVertical="true"
+                    android:layout_marginVertical="20dp"
+                    android:layout_toLeftOf="@+id/StartTranslation"
+                    android:scaleType="fitXY"
+                    app:srcCompat="@drawable/camera"
+                    >
+                </ImageButton>
                 <Button
                     android:id="@+id/StartTranslation"
                     android:layout_width="100dp"
