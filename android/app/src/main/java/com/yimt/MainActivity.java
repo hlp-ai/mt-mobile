@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private String targetLangCode = "zh";
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
+    //private final static String DEFAULT_SERVER = "https://libretranslate.de";
 
     //add
     private Uri imageUri;
@@ -290,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //启用相机
     private void startCameraIntentForResult() {
         // Clean up last time's image
         imageUri = null;
@@ -306,6 +308,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //启动图库
     private void startChooseImageIntentForResult() {
         Intent intent = new Intent();
         intent.setType("image/*");
@@ -313,6 +316,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
     }
 
+     //  activity回调函数
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
@@ -354,6 +358,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
     }
 
+    //刷新并识别图片
     private void tryReloadAndDetectInImage() {
         Log.d(TAG, "Try reload and detect image");
         try {
@@ -375,6 +380,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //创建Processor
     private void createImageProcessor() {
         if (imageProcessor != null) {
             imageProcessor.stop();
@@ -596,11 +602,11 @@ public class MainActivity extends AppCompatActivity {
                     .putString("Source", sourceLangCode)
                     .apply();
             switch (sourceLangCode){
-                case "zh":selectedMode = TEXT_RECOGNITION_CHINESE;break;
                 case "en":selectedMode = TEXT_RECOGNITION_LATIN;break;
                 case "ko":selectedMode = TEXT_RECOGNITION_KOREAN;break;
                 case "ja":selectedMode = TEXT_RECOGNITION_JAPANESE;break;
                 case "sa":selectedMode = TEXT_RECOGNITION_DEVANAGARI;break;
+                default  :selectedMode = TEXT_RECOGNITION_CHINESE;
             }
             createImageProcessor();
         }
