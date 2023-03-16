@@ -1,7 +1,5 @@
 package com.yimt;
 
-import static java.lang.Math.max;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -20,7 +18,6 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.Pair;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -28,7 +25,6 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -38,7 +34,6 @@ import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.yimt.databinding.ActivityMainBinding;
-import com.yimt.java.StillImageActivity;
 import com.yimt.java.textdetector.TextRecognitionProcessor;
 
 import org.json.JSONArray;
@@ -61,28 +56,12 @@ import javax.net.ssl.HttpsURLConnection;
 
 
 public class MainActivity extends AppCompatActivity {
-    private SharedPreferences settings;
-    private ActivityMainBinding binding;
-    private Handler mhandler;
-
     final static int CONN_TIMEOUT = 15000;
     final static int READ_TIMEOUT = 15000;
-
     final static int LANGUAGES = 1;
     final static int TRANSLATE = 2;
     final static int TextRecog = 3;
-
-    private final String AUTO_LANG_CODE = "auto";
-    private final String AUTO_LANG_NAME = "AutoDetect";
-
-    private String sourceLangCode = AUTO_LANG_CODE;
-    private String targetLangCode = "zh";
-
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
-
-    //add
-    private Uri imageUri;
-    private VisionImageProcessor imageProcessor;
     private static final int REQUEST_IMAGE_CAPTURE = 1001;
     private static final int REQUEST_CHOOSE_IMAGE = 1002;
     private static final int REQUEST_CROP_IMAGE = 1003;
@@ -92,6 +71,16 @@ public class MainActivity extends AppCompatActivity {
     private static final String TEXT_RECOGNITION_DEVANAGARI = "Text Recognition Devanagari (Beta)"; //sa
     private static final String TEXT_RECOGNITION_JAPANESE = "Text Recognition Japanese (Beta)"; //ja
     private static final String TEXT_RECOGNITION_KOREAN = "Text Recognition Korean (Beta)"; //ko
+    private final String AUTO_LANG_CODE = "auto";
+    private final String AUTO_LANG_NAME = "AutoDetect";
+    private SharedPreferences settings;
+    private ActivityMainBinding binding;
+    private Handler mhandler;
+    private String sourceLangCode = AUTO_LANG_CODE;
+    private String targetLangCode = "zh";
+    //add
+    private Uri imageUri;
+    private VisionImageProcessor imageProcessor;
     private String selectedMode = TEXT_RECOGNITION_CHINESE;
 
 //    private static int REQ_Still = 1;
@@ -151,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
                     Bundle lc = msg.getData();
                     String transString = lc.getString("transString");
                     String serverError = lc.getString("serverError");
-                    if (transString.isEmpty() && serverError.length()>0)
+                    if (transString.isEmpty() && serverError.length() > 0)
                         Toast.makeText(activity, serverError, Toast.LENGTH_LONG).show();
                     binding.TranslatedTV.setText(transString);
                     binding.translationPending.setVisibility(View.GONE);
@@ -159,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
                     Bundle lc = msg.getData();
                     String languages = lc.getString("languages");
                     String serverError = lc.getString("serverError");
-                    if (languages.isEmpty() && serverError.length()>0) {
+                    if (languages.isEmpty() && serverError.length() > 0) {
                         Toast.makeText(activity, serverError, Toast.LENGTH_LONG).show();
                     } else {
                         //Setting languages needs to happen before setSourceLang and setTargetLang
@@ -170,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
                         setSourceLang();
                         setTargetLang();
                     }
-                } else if (msg.what == TextRecog){
+                } else if (msg.what == TextRecog) {
                     Bundle data = msg.getData();
                     String text = (String) data.get("translate_text");
                     binding.SourceText.setText(text);
@@ -182,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
         if (translate_on_input) {
             binding.SourceText.addTextChangedListener(new TextWatcher() {
                 private static final int DELAY_MILLIS = 4000;
+                final Handler handler = new Handler(Looper.getMainLooper());
+                final Runnable workRunnable = () -> translateText();
 
                 @Override
                 public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -190,9 +181,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                 }
-
-                final Handler handler = new Handler(Looper.getMainLooper());
-                final Runnable workRunnable = () -> translateText();
 
                 @Override
                 public void afterTextChanged(Editable editable) {
@@ -333,19 +321,18 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             crop(imageBitmap);
-        } else if(requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {
+        } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {
             imageUri = data.getData();
             tryReloadAndDetectInImage();
-        }
-        else {
+        } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
     //裁剪函数
-    private void crop(Bitmap bitmap){
+    private void crop(Bitmap bitmap) {
         Intent intent = new Intent("com.android.camera.action.CROP");
-        Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1","1"));
+        Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1", "1"));
         intent.setDataAndType(uri, "image/*");//设置要缩放的图片Uri和类型
         intent.putExtra("crop", "true");
         intent.putExtra("scale", true);//缩放
@@ -386,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                         imageProcessor.stop();
                     }
                     imageProcessor =
-                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(),mhandler);
+                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_CHINESE:
                     if (imageProcessor != null) {
@@ -394,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     imageProcessor =
                             new TextRecognitionProcessor(
-                                    this, new ChineseTextRecognizerOptions.Builder().build(),mhandler);
+                                    this, new ChineseTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_DEVANAGARI:
                     if (imageProcessor != null) {
@@ -402,7 +389,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     imageProcessor =
                             new TextRecognitionProcessor(
-                                    this, new DevanagariTextRecognizerOptions.Builder().build(),mhandler);
+                                    this, new DevanagariTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_JAPANESE:
                     if (imageProcessor != null) {
@@ -410,14 +397,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                     imageProcessor =
                             new TextRecognitionProcessor(
-                                    this, new JapaneseTextRecognizerOptions.Builder().build(),mhandler);
+                                    this, new JapaneseTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_KOREAN:
                     if (imageProcessor != null) {
                         imageProcessor.stop();
                     }
                     imageProcessor =
-                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(),mhandler);
+                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 default:
                     Log.e(TAG, "Unknown selectedMode: " + selectedMode);
@@ -448,11 +435,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private HashMap<String, String> getLanguageMap(String languages){
+    private HashMap<String, String> getLanguageMap(String languages) {
         HashMap<String, String> langMap = new HashMap<String, String>();
         String[] str = languages.split(",");
         for (String s : str) {
-            if (!s.equals("")){
+            if (!s.equals("")) {
                 String[] pair = s.split(":");
                 langMap.put(pair[0], pair[1]);
             }
@@ -470,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
         HttpURLConnection conn = null;
         try {
             conn = server.startsWith("https") ?
-                (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(CONN_TIMEOUT);
             conn.setReadTimeout(READ_TIMEOUT);
             conn.setRequestMethod("GET");
@@ -489,7 +476,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (languages.length() > 0)
-            return languages.substring(0, languages.length()-1);
+            return languages.substring(0, languages.length() - 1);
         return languages;
     }
 
@@ -595,12 +582,22 @@ public class MainActivity extends AppCompatActivity {
             settings.edit()
                     .putString("Source", sourceLangCode)
                     .apply();
-            switch (sourceLangCode){
-                case "zh":selectedMode = TEXT_RECOGNITION_CHINESE;break;
-                case "en":selectedMode = TEXT_RECOGNITION_LATIN;break;
-                case "ko":selectedMode = TEXT_RECOGNITION_KOREAN;break;
-                case "ja":selectedMode = TEXT_RECOGNITION_JAPANESE;break;
-                case "sa":selectedMode = TEXT_RECOGNITION_DEVANAGARI;break;
+            switch (sourceLangCode) {
+                case "zh":
+                    selectedMode = TEXT_RECOGNITION_CHINESE;
+                    break;
+                case "en":
+                    selectedMode = TEXT_RECOGNITION_LATIN;
+                    break;
+                case "ko":
+                    selectedMode = TEXT_RECOGNITION_KOREAN;
+                    break;
+                case "ja":
+                    selectedMode = TEXT_RECOGNITION_JAPANESE;
+                    break;
+                case "sa":
+                    selectedMode = TEXT_RECOGNITION_DEVANAGARI;
+                    break;
             }
             createImageProcessor();
         }
@@ -627,7 +624,7 @@ public class MainActivity extends AppCompatActivity {
         langNames.add(AUTO_LANG_NAME);
         if (!languages.equals("")) {
             HashMap<String, String> langMap = getLanguageMap(languages);
-            for (Map.Entry<String, String> e: langMap.entrySet()){
+            for (Map.Entry<String, String> e : langMap.entrySet()) {
                 langCodes.add(e.getKey());
                 langNames.add(e.getValue());
             }
@@ -646,8 +643,7 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .setPositiveButton(getString(R.string.abort), (dialog, which) -> dialog.cancel())
                     .show();
-        }
-        else {
+        } else {
             langCodes.remove(0);
             langNames.remove(0);
             new AlertDialog.Builder(
