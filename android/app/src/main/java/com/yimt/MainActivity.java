@@ -34,7 +34,9 @@ import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.yimt.databinding.ActivityMainBinding;
-import com.yimt.java.textdetector.TextRecognitionProcessor;
+import com.yimt.ocr.TextRecognitionProcessor;
+import com.yimt.ocr.BitmapUtils;
+import com.yimt.ocr.VisionImageProcessor;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

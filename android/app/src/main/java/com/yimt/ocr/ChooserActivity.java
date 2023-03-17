@@ -1,4 +1,4 @@
-package com.yimt.java;
+package com.yimt.ocr;
 
 import android.content.Context;
 import android.content.Intent;

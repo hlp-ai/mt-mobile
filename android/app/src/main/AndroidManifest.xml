@@ -37,17 +37,17 @@
         </activity>
 
         <activity
-            android:name=".java.StillImageActivity"
+            android:name=".ocr.StillImageActivity"
             android:exported="false"
             android:theme="@style/AppTheme">
         </activity>
 
         <activity
-            android:name=".preference.SettingsActivity"
+            android:name=".ocr.SettingsActivity"
             android:exported="false"/>
 
         <activity
-            android:name=".java.ChooserActivity"
+            android:name=".ocr.ChooserActivity"
             android:exported="false"/>
     </application>
 

@@ -1,4 +1,4 @@
-package com.yimt.java;
+package com.yimt.ocr;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -20,9 +20,6 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.android.odml.image.MlImage;
 import com.google.mlkit.common.MlKitException;
 import com.google.mlkit.vision.common.InputImage;
-import com.yimt.FrameMetadata;
-import com.yimt.ScopedExecutor;
-import com.yimt.VisionImageProcessor;
 
 import java.nio.ByteBuffer;
 import java.util.Timer;

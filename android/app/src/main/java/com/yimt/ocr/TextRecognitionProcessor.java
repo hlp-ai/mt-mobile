@@ -1,4 +1,4 @@
-package com.yimt.java.textdetector;
+package com.yimt.ocr;
 
 import android.content.Context;
 import android.graphics.Point;
@@ -17,7 +17,6 @@ import com.google.mlkit.vision.text.Text.Line;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.TextRecognizerOptionsInterface;
-import com.yimt.java.VisionProcessorBase;
 
 import java.util.List;
 

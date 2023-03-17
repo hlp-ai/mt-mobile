@@ -1,4 +1,4 @@
-package com.yimt.java;
+package com.yimt.ocr;
 
 import static java.lang.Math.max;
 
@@ -33,11 +33,7 @@ import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
-import com.yimt.BitmapUtils;
 import com.yimt.R;
-import com.yimt.VisionImageProcessor;
-import com.yimt.java.textdetector.TextRecognitionProcessor;
-import com.yimt.preference.SettingsActivity;
 
 import java.io.IOException;
 import java.util.ArrayList;

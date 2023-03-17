@@ -1,4 +1,4 @@
-package com.yimt.preference;
+package com.yimt.ocr;
 
 import android.os.Bundle;
 import android.preference.PreferenceFragment;

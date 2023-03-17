@@ -1,4 +1,4 @@
-package com.yimt;
+package com.yimt.ocr;
 
 import androidx.annotation.NonNull;
 

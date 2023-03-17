@@ -1,4 +1,4 @@
-package com.yimt;
+package com.yimt.ocr;
 
 import android.content.ContentResolver;
 import android.graphics.Bitmap;
@@ -35,7 +35,7 @@ public class BitmapUtils {
      * Converts NV21 format byte buffer to bitmap.
      */
     @Nullable
-    public static Bitmap getBitmap(ByteBuffer data, com.yimt.FrameMetadata metadata) {
+    public static Bitmap getBitmap(ByteBuffer data, FrameMetadata metadata) {
         data.rewind();
         byte[] imageInBuffer = new byte[data.limit()];
         data.get(imageInBuffer, 0, imageInBuffer.length);
@@ -63,8 +63,8 @@ public class BitmapUtils {
     @Nullable
     @ExperimentalGetImage
     public static Bitmap getBitmap(ImageProxy image) {
-        com.yimt.FrameMetadata frameMetadata =
-                new com.yimt.FrameMetadata.Builder()
+        FrameMetadata frameMetadata =
+                new FrameMetadata.Builder()
                         .setWidth(image.getWidth())
                         .setHeight(image.getHeight())
                         .setRotation(image.getImageInfo().getRotationDegrees())
