@@ -1,19 +1,3 @@
-/*
- * Copyright 2020 Google LLC. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.yimt.java;
 
 import static java.lang.Math.max;
@@ -44,434 +28,433 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.common.annotation.KeepName;
-import com.yimt.BitmapUtils;
-import com.yimt.R;
-import com.yimt.GraphicOverlay;
-import com.yimt.VisionImageProcessor;
-import com.yimt.java.textdetector.TextRecognitionProcessor;
-import com.yimt.preference.SettingsActivity;
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
 import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
 import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
 import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import com.yimt.BitmapUtils;
+import com.yimt.R;
+import com.yimt.VisionImageProcessor;
+import com.yimt.java.textdetector.TextRecognitionProcessor;
+import com.yimt.preference.SettingsActivity;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Activity demonstrating different image detector features with a still image from camera. */
+/**
+ * Activity demonstrating different image detector features with a still image from camera.
+ */
 @KeepName
 public final class StillImageActivity extends AppCompatActivity {
 
-  private static final String TAG = "StillImageActivity";
+    private static final String TAG = "StillImageActivity";
 
-  private static final String TEXT_RECOGNITION_LATIN = "Text Recognition Latin";
-  private static final String TEXT_RECOGNITION_CHINESE = "Text Recognition Chinese (Beta)";
-  private static final String TEXT_RECOGNITION_DEVANAGARI = "Text Recognition Devanagari (Beta)";
-  private static final String TEXT_RECOGNITION_JAPANESE = "Text Recognition Japanese (Beta)";
-  private static final String TEXT_RECOGNITION_KOREAN = "Text Recognition Korean (Beta)";
+    private static final String TEXT_RECOGNITION_LATIN = "Text Recognition Latin";
+    private static final String TEXT_RECOGNITION_CHINESE = "Text Recognition Chinese (Beta)";
+    private static final String TEXT_RECOGNITION_DEVANAGARI = "Text Recognition Devanagari (Beta)";
+    private static final String TEXT_RECOGNITION_JAPANESE = "Text Recognition Japanese (Beta)";
+    private static final String TEXT_RECOGNITION_KOREAN = "Text Recognition Korean (Beta)";
 
-  private static final String SIZE_SCREEN = "w:screen"; // Match screen width
-  private static final String SIZE_1024_768 = "w:1024"; // ~1024*768 in a normal ratio
-  private static final String SIZE_640_480 = "w:640"; // ~640*480 in a normal ratio
-  private static final String SIZE_ORIGINAL = "w:original"; // Original image size
+    private static final String SIZE_SCREEN = "w:screen"; // Match screen width
+    private static final String SIZE_1024_768 = "w:1024"; // ~1024*768 in a normal ratio
+    private static final String SIZE_640_480 = "w:640"; // ~640*480 in a normal ratio
+    private static final String SIZE_ORIGINAL = "w:original"; // Original image size
 
-  private static final String KEY_IMAGE_URI = "com.google.mlkit.vision.demo.KEY_IMAGE_URI";
-  private static final String KEY_SELECTED_SIZE = "com.google.mlkit.vision.demo.KEY_SELECTED_SIZE";
+    private static final String KEY_IMAGE_URI = "com.google.mlkit.vision.demo.KEY_IMAGE_URI";
+    private static final String KEY_SELECTED_SIZE = "com.google.mlkit.vision.demo.KEY_SELECTED_SIZE";
 
-  private static final int REQUEST_IMAGE_CAPTURE = 1001;
-  private static final int REQUEST_CHOOSE_IMAGE = 1002;
-  private static final int REQUEST_CROP_IMAGE = 1003;
-  private static final int Message_text = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 1001;
+    private static final int REQUEST_CHOOSE_IMAGE = 1002;
+    private static final int REQUEST_CROP_IMAGE = 1003;
+    private static final int Message_text = 1;
+    protected Handler mhandler;
+    boolean isLandScape;
+    private ImageView preview;
+    //  private GraphicOverlay graphicOverlay;
+    private String selectedMode = TEXT_RECOGNITION_CHINESE;
+    private String selectedSize = SIZE_SCREEN;
+    private Uri imageUri;
+    private int imageMaxWidth;
+    private int imageMaxHeight;
+    private VisionImageProcessor imageProcessor;
+    private Intent intent;
 
-  private ImageView preview;
-//  private GraphicOverlay graphicOverlay;
-  private String selectedMode = TEXT_RECOGNITION_CHINESE;
-  private String selectedSize = SIZE_SCREEN;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-  boolean isLandScape;
+        setContentView(R.layout.activity_still_image);
+        intent = this.getIntent();
 
-  private Uri imageUri;
-  private int imageMaxWidth;
-  private int imageMaxHeight;
-  private VisionImageProcessor imageProcessor;
-  private Intent intent;
-  protected Handler mhandler;
-
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-
-    setContentView(R.layout.activity_still_image);
-    intent = this.getIntent();
-
-    findViewById(R.id.select_image_button)
-        .setOnClickListener(
-            view -> {
-              // Menu for selecting either: a) take new photo b) select from existing
-              PopupMenu popup = new PopupMenu(StillImageActivity.this, view);
-              popup.setOnMenuItemClickListener(
-                  menuItem -> {
-                    int itemId = menuItem.getItemId();
-                    if (itemId == R.id.select_images_from_local) {
-                      startChooseImageIntentForResult();
-                      return true;
-                    } else if (itemId == R.id.take_photo_using_camera) {
-                      startCameraIntentForResult();
-                      return true;
-                    }
-                    return false;
-                  });
-              MenuInflater inflater = popup.getMenuInflater();
-              inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
-              popup.show();
-            });
-    preview = findViewById(R.id.preview);
+        findViewById(R.id.select_image_button)
+                .setOnClickListener(
+                        view -> {
+                            // Menu for selecting either: a) take new photo b) select from existing
+                            PopupMenu popup = new PopupMenu(StillImageActivity.this, view);
+                            popup.setOnMenuItemClickListener(
+                                    menuItem -> {
+                                        int itemId = menuItem.getItemId();
+                                        if (itemId == R.id.select_images_from_local) {
+                                            startChooseImageIntentForResult();
+                                            return true;
+                                        } else if (itemId == R.id.take_photo_using_camera) {
+                                            startCameraIntentForResult();
+                                            return true;
+                                        }
+                                        return false;
+                                    });
+                            MenuInflater inflater = popup.getMenuInflater();
+                            inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
+                            popup.show();
+                        });
+        preview = findViewById(R.id.preview);
 //    graphicOverlay = findViewById(R.id.graphic_overlay);
 
-    populateFeatureSelector();
-    populateSizeSelector();
+        populateFeatureSelector();
+        populateSizeSelector();
 
-    isLandScape =
-        (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+        isLandScape =
+                (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
 
-    if (savedInstanceState != null) {
-      imageUri = savedInstanceState.getParcelable(KEY_IMAGE_URI);
-      selectedSize = savedInstanceState.getString(KEY_SELECTED_SIZE);
-    }
-
-    View rootView = findViewById(R.id.root);
-    rootView
-        .getViewTreeObserver()
-        .addOnGlobalLayoutListener(
-            new OnGlobalLayoutListener() {
-              @Override
-              public void onGlobalLayout() {
-                rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                imageMaxWidth = rootView.getWidth();
-                imageMaxHeight = rootView.getHeight() - findViewById(R.id.control).getHeight();
-                if (SIZE_SCREEN.equals(selectedSize)) {
-                  tryReloadAndDetectInImage();
-                }
-              }
-            });
-
-    ImageView settingsButton = findViewById(R.id.settings_button);
-    settingsButton.setOnClickListener(
-        v -> {
-          Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
-          intent.putExtra(
-              SettingsActivity.EXTRA_LAUNCH_SOURCE, SettingsActivity.LaunchSource.STILL_IMAGE);
-          startActivity(intent);
-        });
-    mhandler = new Handler(Looper.getMainLooper()) {
-      public void handleMessage(Message msg) {
-        super.handleMessage(msg);
-        if (msg.what == Message_text) {
-          Bundle data = msg.getData();
-          Intent intent = getIntent();
-          intent.putExtras(data);
-          setResult(2,intent);
-          finish();
+        if (savedInstanceState != null) {
+            imageUri = savedInstanceState.getParcelable(KEY_IMAGE_URI);
+            selectedSize = savedInstanceState.getString(KEY_SELECTED_SIZE);
         }
-      }
-    };
-  }
 
-  @Override
-  public void onResume() {
-    super.onResume();
-    Log.d(TAG, "onResume");
-    createImageProcessor();
-    tryReloadAndDetectInImage();
-  }
+        View rootView = findViewById(R.id.root);
+        rootView
+                .getViewTreeObserver()
+                .addOnGlobalLayoutListener(
+                        new OnGlobalLayoutListener() {
+                            @Override
+                            public void onGlobalLayout() {
+                                rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                                imageMaxWidth = rootView.getWidth();
+                                imageMaxHeight = rootView.getHeight() - findViewById(R.id.control).getHeight();
+                                if (SIZE_SCREEN.equals(selectedSize)) {
+                                    tryReloadAndDetectInImage();
+                                }
+                            }
+                        });
 
-  @Override
-  public void onPause() {
-    super.onPause();
-    if (imageProcessor != null) {
-      imageProcessor.stop();
+        ImageView settingsButton = findViewById(R.id.settings_button);
+        settingsButton.setOnClickListener(
+                v -> {
+                    Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+                    intent.putExtra(
+                            SettingsActivity.EXTRA_LAUNCH_SOURCE, SettingsActivity.LaunchSource.STILL_IMAGE);
+                    startActivity(intent);
+                });
+        mhandler = new Handler(Looper.getMainLooper()) {
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                if (msg.what == Message_text) {
+                    Bundle data = msg.getData();
+                    Intent intent = getIntent();
+                    intent.putExtras(data);
+                    setResult(2, intent);
+                    finish();
+                }
+            }
+        };
     }
-  }
 
-  @Override
-  public void onDestroy() {
-    super.onDestroy();
-    if (imageProcessor != null) {
-      imageProcessor.stop();
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+        createImageProcessor();
+        tryReloadAndDetectInImage();
     }
-  }
 
-  //设置模式选择
-  private void populateFeatureSelector() {
-    Spinner featureSpinner = findViewById(R.id.feature_selector);
-    List<String> options = new ArrayList<>();
-    options.add(TEXT_RECOGNITION_LATIN);
-    options.add(TEXT_RECOGNITION_CHINESE);
-    options.add(TEXT_RECOGNITION_DEVANAGARI);
-    options.add(TEXT_RECOGNITION_JAPANESE);
-    options.add(TEXT_RECOGNITION_KOREAN);
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (imageProcessor != null) {
+            imageProcessor.stop();
+        }
+    }
 
-    // Creating adapter for featureSpinner
-    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
-    // Drop down layout style - list view with radio button
-    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // attaching data adapter to spinner
-    featureSpinner.setAdapter(dataAdapter);
-    featureSpinner.setOnItemSelectedListener(
-        new OnItemSelectedListener() {
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (imageProcessor != null) {
+            imageProcessor.stop();
+        }
+    }
 
-          @Override
-          public void onItemSelected(
-              AdapterView<?> parentView, View selectedItemView, int pos, long id) {
-            selectedMode = parentView.getItemAtPosition(pos).toString();
-            createImageProcessor();
+    //设置模式选择
+    private void populateFeatureSelector() {
+        Spinner featureSpinner = findViewById(R.id.feature_selector);
+        List<String> options = new ArrayList<>();
+        options.add(TEXT_RECOGNITION_LATIN);
+        options.add(TEXT_RECOGNITION_CHINESE);
+        options.add(TEXT_RECOGNITION_DEVANAGARI);
+        options.add(TEXT_RECOGNITION_JAPANESE);
+        options.add(TEXT_RECOGNITION_KOREAN);
+
+        // Creating adapter for featureSpinner
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
+        // Drop down layout style - list view with radio button
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // attaching data adapter to spinner
+        featureSpinner.setAdapter(dataAdapter);
+        featureSpinner.setOnItemSelectedListener(
+                new OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parentView, View selectedItemView, int pos, long id) {
+                        selectedMode = parentView.getItemAtPosition(pos).toString();
+                        createImageProcessor();
+                        tryReloadAndDetectInImage();
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> arg0) {
+                    }
+                });
+    }
+
+    //设置尺寸选择
+    private void populateSizeSelector() {
+        Spinner sizeSpinner = findViewById(R.id.size_selector);
+        List<String> options = new ArrayList<>();
+        options.add(SIZE_SCREEN);
+        options.add(SIZE_1024_768);
+        options.add(SIZE_640_480);
+        options.add(SIZE_ORIGINAL);
+
+        // Creating adapter for featureSpinner
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
+        // Drop down layout style - list view with radio button
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // attaching data adapter to spinner
+        sizeSpinner.setAdapter(dataAdapter);
+        sizeSpinner.setOnItemSelectedListener(
+                new OnItemSelectedListener() {
+
+                    @Override
+                    public void onItemSelected(
+                            AdapterView<?> parentView, View selectedItemView, int pos, long id) {
+                        selectedSize = parentView.getItemAtPosition(pos).toString();
+                        tryReloadAndDetectInImage();
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> arg0) {
+                    }
+                });
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable(KEY_IMAGE_URI, imageUri);
+        outState.putString(KEY_SELECTED_SIZE, selectedSize);
+    }
+
+    private void startCameraIntentForResult() {
+        // Clean up last time's image
+        imageUri = null;
+        preview.setImageBitmap(null);
+
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, "New Picture");
+            values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
+            imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    private void startChooseImageIntentForResult() {
+        Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            Bitmap imageBitmap = null;
+            try {
+                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            crop(imageBitmap);
+        } else if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {
+            // In this case, imageUri is returned by the chooser, save it.
+            Bitmap imageBitmap = null;
+            imageUri = data.getData();
+            try {
+                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            crop(imageBitmap);
+        } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {
+            imageUri = data.getData();
             tryReloadAndDetectInImage();
-          }
-
-          @Override
-          public void onNothingSelected(AdapterView<?> arg0) {}
-        });
-  }
-
-  //设置尺寸选择
-  private void populateSizeSelector() {
-    Spinner sizeSpinner = findViewById(R.id.size_selector);
-    List<String> options = new ArrayList<>();
-    options.add(SIZE_SCREEN);
-    options.add(SIZE_1024_768);
-    options.add(SIZE_640_480);
-    options.add(SIZE_ORIGINAL);
-
-    // Creating adapter for featureSpinner
-    ArrayAdapter<String> dataAdapter = new ArrayAdapter<>(this, R.layout.spinner_style, options);
-    // Drop down layout style - list view with radio button
-    dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // attaching data adapter to spinner
-    sizeSpinner.setAdapter(dataAdapter);
-    sizeSpinner.setOnItemSelectedListener(
-        new OnItemSelectedListener() {
-
-          @Override
-          public void onItemSelected(
-              AdapterView<?> parentView, View selectedItemView, int pos, long id) {
-            selectedSize = parentView.getItemAtPosition(pos).toString();
-            tryReloadAndDetectInImage();
-          }
-
-          @Override
-          public void onNothingSelected(AdapterView<?> arg0) {}
-        });
-  }
-
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putParcelable(KEY_IMAGE_URI, imageUri);
-    outState.putString(KEY_SELECTED_SIZE, selectedSize);
-  }
-
-  private void startCameraIntentForResult() {
-    // Clean up last time's image
-    imageUri = null;
-    preview.setImageBitmap(null);
-
-    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-      ContentValues values = new ContentValues();
-      values.put(MediaStore.Images.Media.TITLE, "New Picture");
-      values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
-      imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-      takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-      startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
-  }
 
-  private void startChooseImageIntentForResult() {
-    Intent intent = new Intent();
-    intent.setType("image/*");
-    intent.setAction(Intent.ACTION_GET_CONTENT);
-    startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
-  }
-
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-      Bitmap imageBitmap = null;
-      try {
-        imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      crop(imageBitmap);
-    } else if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {
-      // In this case, imageUri is returned by the chooser, save it.
-      Bitmap imageBitmap = null;
-      imageUri = data.getData();
-      try {
-        imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      crop(imageBitmap);
-    } else if(requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {
-      imageUri = data.getData();
-      tryReloadAndDetectInImage();
+    //1、裁剪函数
+    private void crop(Bitmap bitmap) {
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(StillImageActivity.this.getContentResolver(), bitmap, "1", "1"));
+        intent.setDataAndType(uri, "image/*");//设置要缩放的图片Uri和类型
+        intent.putExtra("crop", "true");
+        intent.putExtra("scale", true);//缩放
+        intent.putExtra("return-data", false);//当为true的时候就返回缩略图，false就不返回，需要通过Uri
+        intent.putExtra("noFaceDetection", false);//前置摄像头
+        startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
     }
-    else {
-      super.onActivityResult(requestCode, resultCode, data);
-    }
-  }
 
-  //1、裁剪函数
-  private void crop(Bitmap bitmap){
-    Intent intent = new Intent("com.android.camera.action.CROP");
-    Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(StillImageActivity.this.getContentResolver(), bitmap, "1","1"));
-    intent.setDataAndType(uri, "image/*");//设置要缩放的图片Uri和类型
-    intent.putExtra("crop", "true");
-    intent.putExtra("scale", true);//缩放
-    intent.putExtra("return-data", false);//当为true的时候就返回缩略图，false就不返回，需要通过Uri
-    intent.putExtra("noFaceDetection", false);//前置摄像头
-    startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
-  }
+    private void tryReloadAndDetectInImage() {
+        Log.d(TAG, "Try reload and detect image");
+        try {
+            if (imageUri == null) {
+                return;
+            }
 
-  private void tryReloadAndDetectInImage() {
-    Log.d(TAG, "Try reload and detect image");
-    try {
-      if (imageUri == null) {
-        return;
-      }
+            if (SIZE_SCREEN.equals(selectedSize) && imageMaxWidth == 0) {
+                // UI layout has not finished yet, will reload once it's ready.
+                return;
+            }
 
-      if (SIZE_SCREEN.equals(selectedSize) && imageMaxWidth == 0) {
-        // UI layout has not finished yet, will reload once it's ready.
-        return;
-      }
+            Bitmap imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            if (imageBitmap == null) {
+                return;
+            }
 
-      Bitmap imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-      if (imageBitmap == null) {
-        return;
-      }
-
-      // Clear the overlay first
+            // Clear the overlay first
 //      graphicOverlay.clear();
 
-      Bitmap resizedBitmap;
-      if (selectedSize.equals(SIZE_ORIGINAL)) {
-        resizedBitmap = imageBitmap;
-      } else {
-        // Get the dimensions of the image view
-        Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
+            Bitmap resizedBitmap;
+            if (selectedSize.equals(SIZE_ORIGINAL)) {
+                resizedBitmap = imageBitmap;
+            } else {
+                // Get the dimensions of the image view
+                Pair<Integer, Integer> targetedSize = getTargetedWidthHeight();
 
-        // Determine how much to scale down the image
-        float scaleFactor =
-            max(
-                (float) imageBitmap.getWidth() / (float) targetedSize.first,
-                (float) imageBitmap.getHeight() / (float) targetedSize.second);
+                // Determine how much to scale down the image
+                float scaleFactor =
+                        max(
+                                (float) imageBitmap.getWidth() / (float) targetedSize.first,
+                                (float) imageBitmap.getHeight() / (float) targetedSize.second);
 
-        resizedBitmap =
-            Bitmap.createScaledBitmap(
-                imageBitmap,
-                (int) (imageBitmap.getWidth() / scaleFactor),
-                (int) (imageBitmap.getHeight() / scaleFactor),
-                true);
-      }
+                resizedBitmap =
+                        Bitmap.createScaledBitmap(
+                                imageBitmap,
+                                (int) (imageBitmap.getWidth() / scaleFactor),
+                                (int) (imageBitmap.getHeight() / scaleFactor),
+                                true);
+            }
 
-      preview.setImageBitmap(resizedBitmap);
+            preview.setImageBitmap(resizedBitmap);
 
-      if (imageProcessor != null) {
+            if (imageProcessor != null) {
 //        graphicOverlay.setImageSourceInfo(
 //            resizedBitmap.getWidth(), resizedBitmap.getHeight(), /* isFlipped= */ false);
-        imageProcessor.processBitmap(resizedBitmap);
+                imageProcessor.processBitmap(resizedBitmap);
 //        Log.e(TAG, "*********************************************");
 
-      } else {
-        Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
-      }
-    } catch (IOException e) {
-      Log.e(TAG, "Error retrieving saved image");
-      imageUri = null;
-    }
-  }
-
-  private Pair<Integer, Integer> getTargetedWidthHeight() {
-    int targetWidth;
-    int targetHeight;
-
-    switch (selectedSize) {
-      case SIZE_SCREEN:
-        targetWidth = imageMaxWidth;
-        targetHeight = imageMaxHeight;
-        break;
-      case SIZE_640_480:
-        targetWidth = isLandScape ? 640 : 480;
-        targetHeight = isLandScape ? 480 : 640;
-        break;
-      case SIZE_1024_768:
-        targetWidth = isLandScape ? 1024 : 768;
-        targetHeight = isLandScape ? 768 : 1024;
-        break;
-      default:
-        throw new IllegalStateException("Unknown size");
+            } else {
+                Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Error retrieving saved image");
+            imageUri = null;
+        }
     }
 
-    return new Pair<>(targetWidth, targetHeight);
-  }
+    private Pair<Integer, Integer> getTargetedWidthHeight() {
+        int targetWidth;
+        int targetHeight;
 
-  private void createImageProcessor() {
-    if (imageProcessor != null) {
-      imageProcessor.stop();
+        switch (selectedSize) {
+            case SIZE_SCREEN:
+                targetWidth = imageMaxWidth;
+                targetHeight = imageMaxHeight;
+                break;
+            case SIZE_640_480:
+                targetWidth = isLandScape ? 640 : 480;
+                targetHeight = isLandScape ? 480 : 640;
+                break;
+            case SIZE_1024_768:
+                targetWidth = isLandScape ? 1024 : 768;
+                targetHeight = isLandScape ? 768 : 1024;
+                break;
+            default:
+                throw new IllegalStateException("Unknown size");
+        }
+
+        return new Pair<>(targetWidth, targetHeight);
     }
-    try {
-      switch (selectedMode) {
-        case TEXT_RECOGNITION_LATIN:
-          if (imageProcessor != null) {
+
+    private void createImageProcessor() {
+        if (imageProcessor != null) {
             imageProcessor.stop();
-          }
-          imageProcessor =
-              new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(),mhandler);
-          break;
-        case TEXT_RECOGNITION_CHINESE:
-          if (imageProcessor != null) {
-            imageProcessor.stop();
-          }
-          imageProcessor =
-              new TextRecognitionProcessor(
-                  this, new ChineseTextRecognizerOptions.Builder().build(),mhandler);
-          break;
-        case TEXT_RECOGNITION_DEVANAGARI:
-          if (imageProcessor != null) {
-            imageProcessor.stop();
-          }
-          imageProcessor =
-              new TextRecognitionProcessor(
-                  this, new DevanagariTextRecognizerOptions.Builder().build(),mhandler);
-          break;
-        case TEXT_RECOGNITION_JAPANESE:
-          if (imageProcessor != null) {
-            imageProcessor.stop();
-          }
-          imageProcessor =
-              new TextRecognitionProcessor(
-                  this, new JapaneseTextRecognizerOptions.Builder().build(),mhandler);
-          break;
-        case TEXT_RECOGNITION_KOREAN:
-          if (imageProcessor != null) {
-            imageProcessor.stop();
-          }
-          imageProcessor =
-              new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(),mhandler);
-          break;
-        default:
-          Log.e(TAG, "Unknown selectedMode: " + selectedMode);
-      }
-    } catch (Exception e) {
-      Log.e(TAG, "Can not create image processor: " + selectedMode, e);
-      Toast.makeText(
-              getApplicationContext(),
-              "Can not create image processor: " + e.getMessage(),
-              Toast.LENGTH_LONG)
-          .show();
+        }
+        try {
+            switch (selectedMode) {
+                case TEXT_RECOGNITION_LATIN:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), mhandler);
+                    break;
+                case TEXT_RECOGNITION_CHINESE:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(
+                                    this, new ChineseTextRecognizerOptions.Builder().build(), mhandler);
+                    break;
+                case TEXT_RECOGNITION_DEVANAGARI:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(
+                                    this, new DevanagariTextRecognizerOptions.Builder().build(), mhandler);
+                    break;
+                case TEXT_RECOGNITION_JAPANESE:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(
+                                    this, new JapaneseTextRecognizerOptions.Builder().build(), mhandler);
+                    break;
+                case TEXT_RECOGNITION_KOREAN:
+                    if (imageProcessor != null) {
+                        imageProcessor.stop();
+                    }
+                    imageProcessor =
+                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(), mhandler);
+                    break;
+                default:
+                    Log.e(TAG, "Unknown selectedMode: " + selectedMode);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Can not create image processor: " + selectedMode, e);
+            Toast.makeText(
+                            getApplicationContext(),
+                            "Can not create image processor: " + e.getMessage(),
+                            Toast.LENGTH_LONG)
+                    .show();
+        }
     }
-  }
 }
