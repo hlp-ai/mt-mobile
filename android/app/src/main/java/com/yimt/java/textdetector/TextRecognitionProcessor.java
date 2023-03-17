@@ -18,7 +18,6 @@ import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.TextRecognizerOptionsInterface;
 import com.yimt.java.VisionProcessorBase;
-import com.yimt.preference.PreferenceUtils;
 
 import java.util.List;
 
@@ -30,17 +29,11 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
     private static final String TAG = "TextRecProcessor";
 
     private final TextRecognizer textRecognizer;
-    private final Boolean shouldGroupRecognizedTextInBlocks;
-    private final Boolean showLanguageTag;
-    private final boolean showConfidence;
     protected Handler mhandler;
 
     public TextRecognitionProcessor(
             Context context, TextRecognizerOptionsInterface textRecognizerOptions, Handler handle) {
         super(context);
-        shouldGroupRecognizedTextInBlocks = PreferenceUtils.shouldGroupRecognizedTextInBlocks(context);
-        showLanguageTag = PreferenceUtils.showLanguageTag(context);
-        showConfidence = PreferenceUtils.shouldShowTextConfidence(context);
         textRecognizer = TextRecognition.getClient(textRecognizerOptions);
         mhandler = handle;
     }
@@ -108,13 +101,6 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
         message.setData(bundle);
         message.what = 3;
         mhandler.sendMessage(message);
-//    graphicOverlay.add(
-//        new TextGraphic(
-//            graphicOverlay,
-//            text,
-//            shouldGroupRecognizedTextInBlocks,
-//            showLanguageTag,
-//            showConfidence));
     }
 
     @Override
