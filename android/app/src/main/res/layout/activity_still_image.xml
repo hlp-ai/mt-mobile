@@ -17,15 +17,6 @@
       app:layout_constraintStart_toStartOf="parent"
       app:layout_constraintTop_toTopOf="parent" />
 
-  <com.yimt.GraphicOverlay
-      android:id="@+id/graphic_overlay"
-      android:layout_width="0dp"
-      android:layout_height="0dp"
-      app:layout_constraintLeft_toLeftOf="@id/preview"
-      app:layout_constraintRight_toRightOf="@id/preview"
-      app:layout_constraintTop_toTopOf="@id/preview"
-      app:layout_constraintBottom_toBottomOf="@id/preview"/>
-
   <LinearLayout
       android:id="@id/control"
       android:layout_width="match_parent"
