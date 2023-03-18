@@ -40,6 +40,7 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
 
     @Override
     protected Task<Text> detectInImage(InputImage image) {
+        Log.d(TAG, "Recognition task starts");
         return textRecognizer.process(image);
     }
 

@@ -41,8 +41,7 @@ public abstract class VisionProcessorBase<T> implements VisionImageProcessor {
         return setUpListener(detectInImage(image));
     }
 
-    private Task<T> setUpListener(
-            Task<T> task) {
+    private Task<T> setUpListener(Task<T> task) {
         return task.addOnSuccessListener(
                         executor,
                         results -> {
