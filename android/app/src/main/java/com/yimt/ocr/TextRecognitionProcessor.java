@@ -95,7 +95,7 @@ public class TextRecognitionProcessor extends VisionProcessorBase<Text> {
         logExtrasForTesting(text);
         String tx = (String) text.getText();
         Bundle bundle = new Bundle();
-        bundle.putString("translate_text", tx);
+        bundle.putString("ocr_text", tx);
         Message message = new Message();
         message.setData(bundle);
         message.what = 3;
