@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     //add
     private Uri imageUri;
     private VisionImageProcessor imageProcessor;
-    private String selectedMode = TEXT_RECOGNITION_CHINESE;
+    private String selectedMode = TEXT_RECOGNITION_LATIN;
 
 //    private static int REQ_Still = 1;
 
@@ -97,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         createImageProcessor();
+
+        // OCR button
         findViewById(R.id.select_image_button)
                 .setOnClickListener(
                         view -> {
@@ -163,12 +165,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else if (msg.what == TextRecog) {
                     Bundle data = msg.getData();
-                    String text = (String) data.get("translate_text");
+                    String text = (String) data.get("ocr_text");
                     binding.SourceText.setText(text);
                 }
             }
         };
 
+        // translate on input, disabled now
         boolean translate_on_input = false;
         if (translate_on_input) {
             binding.SourceText.addTextChangedListener(new TextWatcher() {
@@ -283,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
     private void startCameraIntentForResult() {
         // Clean up last time's image
         imageUri = null;
-//        preview.setImageBitmap(null);
 
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -368,43 +370,29 @@ public class MainActivity extends AppCompatActivity {
         if (imageProcessor != null) {
             imageProcessor.stop();
         }
+
         try {
             switch (selectedMode) {
                 case TEXT_RECOGNITION_LATIN:
-                    if (imageProcessor != null) {
-                        imageProcessor.stop();
-                    }
                     imageProcessor =
                             new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_CHINESE:
-                    if (imageProcessor != null) {
-                        imageProcessor.stop();
-                    }
                     imageProcessor =
                             new TextRecognitionProcessor(
                                     this, new ChineseTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_DEVANAGARI:
-                    if (imageProcessor != null) {
-                        imageProcessor.stop();
-                    }
                     imageProcessor =
                             new TextRecognitionProcessor(
                                     this, new DevanagariTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_JAPANESE:
-                    if (imageProcessor != null) {
-                        imageProcessor.stop();
-                    }
                     imageProcessor =
                             new TextRecognitionProcessor(
                                     this, new JapaneseTextRecognizerOptions.Builder().build(), mhandler);
                     break;
                 case TEXT_RECOGNITION_KOREAN:
-                    if (imageProcessor != null) {
-                        imageProcessor.stop();
-                    }
                     imageProcessor =
                             new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(), mhandler);
                     break;
