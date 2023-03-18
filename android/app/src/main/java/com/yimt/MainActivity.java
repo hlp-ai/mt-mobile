@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1001;
     private static final int REQUEST_CHOOSE_IMAGE = 1002;
     private static final int REQUEST_CROP_IMAGE = 1003;
-    private static final String TAG = "StillImageActivity";
+    private static final String TAG = "MainActivity";
     private static final String TEXT_RECOGNITION_LATIN = "Text Recognition Latin"; //en
     private static final String TEXT_RECOGNITION_CHINESE = "Text Recognition Chinese (Beta)"; //zh
     private static final String TEXT_RECOGNITION_DEVANAGARI = "Text Recognition Devanagari (Beta)"; //sa
@@ -80,12 +80,10 @@ public class MainActivity extends AppCompatActivity {
     private Handler mhandler;
     private String sourceLangCode = AUTO_LANG_CODE;
     private String targetLangCode = "zh";
-    //add
+
     private Uri imageUri;
     private VisionImageProcessor imageProcessor;
     private String selectedMode = TEXT_RECOGNITION_LATIN;
-
-//    private static int REQ_Still = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -356,6 +354,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             if (imageProcessor != null) {
+                Log.d(TAG, "Starting OCR...");
                 imageProcessor.processBitmap(imageBitmap);
             } else {
                 Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
