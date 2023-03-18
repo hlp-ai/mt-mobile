@@ -36,19 +36,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ocr.StillImageActivity"
-            android:exported="false"
-            android:theme="@style/AppTheme">
-        </activity>
-
-        <activity
-            android:name=".ocr.SettingsActivity"
-            android:exported="false"/>
-
-        <activity
-            android:name=".ocr.ChooserActivity"
-            android:exported="false"/>
     </application>
 
 </manifest>
