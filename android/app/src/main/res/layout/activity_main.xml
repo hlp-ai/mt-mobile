@@ -107,21 +107,21 @@
                     android:layout_toLeftOf="@id/CopyTranslation"
                     android:textSize="20sp" />
 
-                <ImageButton
+                <Button
                     android:id="@+id/select_image_button"
-                    android:layout_width="70dp"
-                    android:layout_height="50dp"
+                    android:layout_width="80dp"
+                    android:layout_height="30dp"
                     android:layout_centerVertical="true"
                     android:layout_marginVertical="20dp"
                     android:layout_toLeftOf="@+id/StartTranslation"
-                    android:scaleType="fitXY"
-                    app:srcCompat="@drawable/camera"
-                    >
-                </ImageButton>
+                    android:background="#00FFFFFF"
+                    android:text="@string/ocr"
+                    android:textSize="20sp" />
+
                 <Button
                     android:id="@+id/StartTranslation"
-                    android:layout_width="100dp"
-                    android:layout_height="50dp"
+                    android:layout_width="80dp"
+                    android:layout_height="30dp"
                     android:layout_centerVertical="true"
                     android:layout_marginVertical="20dp"
                     android:layout_toStartOf="@+id/CopyTranslation"
@@ -141,7 +141,6 @@
                     android:contentDescription="@string/copy"
                     android:src="@drawable/copy"
                     app:tint="?attr/frontColor" />
-
 
             </RelativeLayout>
 
