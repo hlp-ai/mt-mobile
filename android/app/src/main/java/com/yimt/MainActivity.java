@@ -23,6 +23,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.PopupMenu;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -255,6 +256,7 @@ public class MainActivity extends AppCompatActivity {
             View about = getLayoutInflater().inflate(R.layout.about, null);
             EditText serverET = about.findViewById(R.id.Server);
             EditText apiET = about.findViewById(R.id.Api);
+            Spinner spinner = about.findViewById(R.id.spinner_ocr);
             final String[] server = {settings.getString("server", DEFAULT_SERVER)};
             String apiKey = settings.getString("apiKey", "");
             serverET.setText(server[0]);
@@ -268,6 +270,9 @@ public class MainActivity extends AppCompatActivity {
                                 .putString("server", server[0])
                                 .putString("apiKey", apiET.getText().toString())
                                 .apply();
+
+                        selectedMode = spinner.getSelectedItem().toString();
+                        Toast.makeText(this, selectedMode, Toast.LENGTH_LONG).show();
 
                         //Retrieve languages into shared preferences
                         try {
