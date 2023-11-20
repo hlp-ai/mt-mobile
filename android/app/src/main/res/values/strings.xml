@@ -8,6 +8,8 @@
     <string name="copiedClipboard">已拷贝到粘贴板</string>
     <string name="ocr">识图</string>
     <string name="translate">翻译</string>
+    <string name="voice">录音</string>
+    <string name="playVoice">播放</string>
     <string name="chooseSLanguage">选择源语言</string>
     <string name="chooseTLanguage">选择目标语言</string>
     <string name="switchLanguages">翻转语言方向</string>

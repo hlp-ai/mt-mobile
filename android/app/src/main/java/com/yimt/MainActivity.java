@@ -17,6 +17,7 @@ import android.os.Message;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MenuInflater;
 import android.view.View;
@@ -25,6 +26,8 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.Spinner;
 import android.widget.Toast;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -40,10 +43,15 @@ import com.yimt.ocr.BitmapUtils;
 import com.yimt.ocr.VisionImageProcessor;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -64,6 +72,8 @@ public class MainActivity extends AppCompatActivity {
     final static int LANGUAGES = 1;
     final static int TRANSLATE = 2;
     final static int TextRecog = 3;
+    final static int AudioText = 4;
+    final static int AudioPlay = 5;
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
     private static final int REQUEST_IMAGE_CAPTURE = 1001;
     private static final int REQUEST_CHOOSE_IMAGE = 1002;
@@ -85,6 +95,10 @@ public class MainActivity extends AppCompatActivity {
     private Uri imageUri;
     private VisionImageProcessor imageProcessor;
     private String selectedMode = TEXT_RECOGNITION_LATIN;
+    private boolean isStart = false;
+    private MediaRecorder mr = null;
+    private String audioFile = null;
+    private MediaPlayer mediaPlayer = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +110,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         createImageProcessor();
+
+        binding.voice.setOnClickListener(v -> {
+            if(!isStart){
+                audioFile = startRecord();
+                binding.voice.setText("停止");
+                isStart = true;
+            }else{
+                stopRecord();
+                binding.voice.setText("录音");
+                isStart = false;
+                try {
+                    getAudioText(audioFile);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
+        findViewById(R.id.PlayAudioButton).setOnClickListener(v -> {
+            getAudio();
+        });
 
         // OCR button
         findViewById(R.id.select_image_button)
@@ -166,6 +201,16 @@ public class MainActivity extends AppCompatActivity {
                     Bundle data = msg.getData();
                     String text = (String) data.get("ocr_text");
                     binding.SourceText.setText(text);
+                }else if (msg.what == AudioText){
+                    Bundle data = msg.getData();
+                    String text = (String) data.get("audioToText");
+                    binding.SourceText.setText((text));
+                }else if (msg.what == AudioPlay){
+                    Bundle data = msg.getData();
+                    String audio = (String) data.get("audio");
+                    //使用MediaPlayer播放base64格式的音频
+                    String type = (String) data.get("type");
+                    playAudio(audio,type);
                 }
             }
         };
@@ -214,7 +259,9 @@ public class MainActivity extends AppCompatActivity {
 
                 InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                 View view1 = getCurrentFocus();
-                imm.hideSoftInputFromWindow(view1.getWindowToken(), 0);
+                if (view1 != null) {
+                    imm.hideSoftInputFromWindow(view1.getWindowToken(), 0);
+                }
             }
 
         });
@@ -364,6 +411,11 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
             }
+            try{
+                getTextFromImage(imageBitmap);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         } catch (IOException e) {
             Log.e(TAG, "Error retrieving saved image");
             imageUri = null;
@@ -427,6 +479,332 @@ public class MainActivity extends AppCompatActivity {
         if (imageProcessor != null) {
             imageProcessor.stop();
         }
+    }
+
+    //开始录制
+    private String startRecord() {
+        String audioFilePath = "";
+        if (mr == null) {
+            File dir = new File(getExternalFilesDir(null), "audio");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            File soundFile = new File(dir, System.currentTimeMillis() + ".3gp");
+            if (!soundFile.exists()) {
+                try {
+                    soundFile.createNewFile();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            mr = new MediaRecorder();
+            mr.setAudioSource(MediaRecorder.AudioSource.MIC);
+            mr.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mr.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+            audioFilePath = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
+
+            mr.setOutputFile(audioFilePath);
+
+            try {
+                mr.prepare();
+                mr.start();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return audioFilePath;
+    }
+
+    private void stopRecord(){
+        if (mr!=null){
+            mr.stop();
+            mr.reset();
+            mr.release();
+            mr = null;
+        }
+    }
+
+    //将录制的音频传到后端，并返回所识别的文本
+     private String requestAudioToText(String audioFilePath, String serverUrl) {
+        String translatedText = "";
+        try {
+            // 读取音频文件并转换为 Base64 格式的字符串
+            String audioBase64 = encodeAudioFileToBase64(audioFilePath);
+
+            // 创建一个 JSON 对象，包含音频数据和其他参数
+            JSONObject json = new JSONObject();
+            json.put("base64", audioBase64);
+            json.put("format", "3gp");
+            json.put("rate", 8000);
+            json.put("channel", 1);
+            json.put("token", "api_key");
+            json.put("len", audioFile.length());
+
+            // 创建一个 HttpURLConnection 对象
+            URL url = new URL(serverUrl+"/translate_audio2text");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(CONN_TIMEOUT);
+            conn.setReadTimeout(READ_TIMEOUT);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+
+            // 发送请求数据
+            OutputStream os = conn.getOutputStream();
+            os.write(json.toString().getBytes(StandardCharsets.UTF_8));
+            os.close();
+
+            // 获取并处理响应数据
+            InputStream is = conn.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+            is.close();
+            conn.disconnect();
+
+            // 解析响应数据并获取 translatedText 字段的值
+            JSONObject responseJson = new JSONObject(response.toString());
+            translatedText = responseJson.getString("translatedText");
+        } catch (Exception e) {
+            // 处理异常
+            e.printStackTrace();
+        }
+
+        return translatedText;
+    }
+
+
+    private byte[] readFileToByteArray(String filePath) throws IOException {
+        try (FileInputStream fileInputStream = new FileInputStream(filePath);
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+
+            return byteArrayOutputStream.toByteArray();
+        }
+    }
+
+    public String encodeAudioFileToBase64(String filePath) throws IOException {
+        byte[] audioData = readFileToByteArray(filePath);
+        return Base64.encodeToString(audioData, Base64.DEFAULT);
+    }
+
+    private void getAudioText(String filePath) throws Exception {
+        String server = settings.getString("server", DEFAULT_SERVER);
+
+        Thread thread = new Thread(() -> {
+            String error = "";
+            String audioToText = "";
+            try {
+                audioToText = requestAudioToText(filePath,server);
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString("audioToText", audioToText);
+            bundle.putString("serverError", error);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = AudioText;
+            mhandler.sendMessage(msg);
+        });
+
+        thread.start();
+    }
+
+
+    private JSONObject requestAudioFromText(String server, String apiKey) throws Exception{
+        String audio = "";
+        String type = "";
+        JSONObject responseJson;
+        URL url = new URL(server + "/translate_text2audio");
+        Log.d("yimt", "Request audio from " + url);
+
+        HttpURLConnection conn = null;
+        try {
+            conn = server.startsWith("https") ?
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(CONN_TIMEOUT);
+            conn.setReadTimeout(READ_TIMEOUT);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+
+            JSONObject json = new JSONObject();
+            String q = binding.TranslatedTV.getText().toString().replace("&", "%26");
+//            String data = "text=" + q + "&token="+ "123";
+            if (!apiKey.equals(""))
+//                data += "&api_key=" + apiKey;
+                json.put("api_key", apiKey);
+            json.put("text", q);
+            json.put("token", "123");
+            OutputStream os = conn.getOutputStream();
+            os.write(json.toString().getBytes(StandardCharsets.UTF_8));
+            os.close();
+
+            InputStream is = conn.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+            is.close();
+//            conn.disconnect();
+
+            // 解析响应数据并获取 translatedText 字段的值
+            responseJson = new JSONObject(response.toString());
+            audio = responseJson.getString("base64");
+            type = responseJson.getString("type");
+        } finally {
+            conn.disconnect();
+        }
+
+        return responseJson;
+    }
+
+    //接受服务器返回的音频数据并播放，接收的格式为base64
+    private void getAudio(){
+        String server = settings.getString("server", DEFAULT_SERVER);
+
+        Thread thread = new Thread(() -> {
+            String error = "";
+            JSONObject audioMsg = new JSONObject();
+            try {
+                audioMsg = requestAudioFromText(server, "");
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            try {
+                bundle.putString("audio", audioMsg.getString("base64"));
+                bundle.putString("type", audioMsg.getString("type"));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+            bundle.putString("serverError", error);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = AudioPlay;
+            mhandler.sendMessage(msg);
+        });
+        thread.start();
+    }
+
+    private void playAudio(String audio,String type){
+        byte[] audioData = Base64.decode(audio, Base64.DEFAULT);
+        try {
+            // Create a temporary audio file
+            File tempAudioFile = File.createTempFile("temp_audio", "."+type);
+
+            // Write the audio data to the temporary file
+            OutputStream os = new FileOutputStream(tempAudioFile);
+            os.write(audioData);
+            os.close();
+
+            // Initialize and start the MediaPlayer
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(tempAudioFile.getAbsolutePath());
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+
+            // Add an event listener to release resources when playback is complete
+            mediaPlayer.setOnCompletionListener(mp -> {
+                mediaPlayer.release();
+                tempAudioFile.delete(); // Delete the temporary file
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String requestTextFromImage(String server, String apiKey, Bitmap imageBitmap) throws Exception {
+        String text = "";
+        URL url = new URL(server + "/translate_image2text");
+        Log.d("yimt", "Request text from " + url);
+
+        HttpURLConnection conn = null;
+        try {
+            conn = server.startsWith("https") ?
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(CONN_TIMEOUT);
+            conn.setReadTimeout(READ_TIMEOUT);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+
+            JSONObject json = new JSONObject();
+            String base64 = encodeImageToBase64(imageBitmap);
+            json.put("base64", base64);
+            if (!apiKey.equals(""))
+                json.put("api_key", apiKey);
+            OutputStream os = conn.getOutputStream();
+            os.write(json.toString().getBytes(StandardCharsets.UTF_8));
+            os.close();
+
+            InputStream is = conn.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+            is.close();
+            conn.disconnect();
+
+            // 解析响应数据并获取 translatedText 字段的值
+            JSONObject responseJson = new JSONObject(response.toString());
+            text = responseJson.getString("translatedText");
+        } finally {
+            conn.disconnect();
+        }
+        return text;
+    }
+
+    private void getTextFromImage(Bitmap imageBitmap) throws Exception {
+        String server = settings.getString("server", DEFAULT_SERVER);
+
+        Thread thread = new Thread(() -> {
+            String error = "";
+            String text = "";
+            try {
+                text = requestTextFromImage(server, "", imageBitmap);
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString("ocr_text", text);
+            bundle.putString("serverError", error);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = TextRecog;
+            mhandler.sendMessage(msg);
+        });
+
+        thread.start();
+    }
+
+    private String encodeImageToBase64(Bitmap imageBitmap) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(imageBytes, Base64.DEFAULT);
     }
 
     private HashMap<String, String> getLanguageMap(String languages) {
