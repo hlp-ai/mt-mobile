@@ -136,7 +136,7 @@
                     android:layout_toStartOf="@+id/StartTranslation"
                     android:background="#00FFFFFF"
                     android:text="@string/voice"
-                    android:textSize="18sp" />
+                    android:textSize="18sp"/>
 
                 <Button
                     android:id="@+id/StartTranslation"

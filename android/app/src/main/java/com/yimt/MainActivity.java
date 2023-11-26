@@ -1,5 +1,6 @@
 package com.yimt;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ClipData;
@@ -8,8 +9,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,17 +22,21 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
@@ -113,11 +120,21 @@ public class MainActivity extends AppCompatActivity {
 
         binding.voice.setOnClickListener(v -> {
             if(!isStart){
-                audioFile = startRecord();
-                binding.voice.setText("停止");
+                startRecord();
+                handler.post(updateRecordingTextRunnable); // 开始更新文本
                 isStart = true;
+
+                // 设置按钮的 autoSizeTextType 属性为 uniform，并设置最小和最大文本大小
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    binding.voice.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    binding.voice.setAutoSizeTextTypeUniformWithConfiguration(11, 18, 1, TypedValue.COMPLEX_UNIT_SP);
+                }
             }else{
                 stopRecord();
+                handler.removeCallbacks(updateRecordingTextRunnable); // 停止更新文本
+                binding.voice.setTextSize(18);
                 binding.voice.setText("录音");
                 isStart = false;
                 try {
@@ -125,6 +142,12 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+
+                // 设置按钮的 autoSizeTextType 属性为 none，并将文本大小设置回原始大小
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    binding.voice.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_NONE);
+                }
+                binding.voice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
             }
         });
 
@@ -481,9 +504,76 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable updateRecordingTextRunnable = new Runnable() {
+        private int dotCount = 0;
+
+        @Override
+        public void run() {
+            dotCount = (dotCount % 3) + 1;
+            String text = "录音中";
+            for (int i = 0; i < dotCount; i++) {
+                text += ".";
+            }
+//            binding.voice.setTextSize(11);
+            binding.voice.setText(text);
+            if (isStart) {
+                handler.postDelayed(this, 500); // 每500毫秒更新一次
+            }
+        }
+    };
+
+
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+
+    private void startRecord() {
+        // Check if the Record Audio permission is already available.
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            // Record Audio permission has not been granted.
+            requestRecordAudioPermission();
+        } else {
+            // Record Audio permissions is already available, show the camera preview.
+            startRecording();
+        }
+    }
+
+    private void requestRecordAudioPermission() {
+        // Record Audio permission has not been granted yet. Request it directly.
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission has been granted. Start recording
+                startRecording();
+            } else {
+                // Permission request was denied.
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+                    // Show an explanation to the user *asynchronously* -- don't block
+                    // this thread waiting for the user's response! After the user
+                    // sees the explanation, try again to request the permission.
+                    new AlertDialog.Builder(this)
+                            .setTitle("需要录音权限")
+                            .setMessage("此应用需要录音权限以进行录音功能。请授予录音权限。")
+                            .setPositiveButton("OK", (dialog, id) -> requestRecordAudioPermission())
+                            .setNegativeButton("Cancel", (dialog, id) -> dialog.cancel())
+                            .create()
+                            .show();
+                } else {
+                    // User has chosen to deny the permission permanently,
+                    // you can prompt the user here to open the settings and manually allow the permission
+                    Toast.makeText(this, "录音权限被拒绝，无法录音。请在设置中手动开启。", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
     //开始录制
-    private String startRecord() {
-        String audioFilePath = "";
+    private void startRecording() {
+//        String audioFilePath = "";
         if (mr == null) {
             File dir = new File(getExternalFilesDir(null), "audio");
             if (!dir.exists()) {
@@ -502,9 +592,9 @@ public class MainActivity extends AppCompatActivity {
             mr.setAudioSource(MediaRecorder.AudioSource.MIC);
             mr.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
             mr.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-            audioFilePath = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
+            audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
 
-            mr.setOutputFile(audioFilePath);
+            mr.setOutputFile(audioFile);
 
             try {
                 mr.prepare();
@@ -513,7 +603,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-        return audioFilePath;
+//        return audioFile;
     }
 
     private void stopRecord(){
