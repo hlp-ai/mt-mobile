@@ -3,17 +3,14 @@ package com.yimt;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.Tensor;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.LongBuffer;
 
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import android.os.Bundle;
 import android.util.Log;
