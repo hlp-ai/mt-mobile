@@ -93,5 +93,8 @@ dependencies {
 
 //    // On Device Machine Learnings
 //    implementation "com.google.android.odml:image:1.0.0-beta1"
-
+//    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+    implementation 'org.tensorflow:tensorflow-lite:2.11.0'
+    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.11.0'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
 }
