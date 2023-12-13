@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".exp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_margin="25dp">
+
+        <EditText
+            android:id="@+id/source"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_margin="15dp"
+            android:layout_height="0dp"
+            android:background="#00FFFFFF"
+            android:hint="@string/typeToTranslate"
+            android:inputType="textMultiLine"
+            android:textSize="22sp" />
+
+        <Button
+            android:id="@+id/button"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:layout_gravity="right"
+            android:layout_marginEnd="10dp"
+            android:text="@string/translate"
+            tools:ignore="MissingConstraints,RtlHardcoded" />
+
+        <Button
+            android:id="@+id/image"
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:layout_gravity="right"
+            android:layout_marginEnd="10dp"
+            android:text="@string/ocr"
+            tools:ignore="MissingConstraints,RtlHardcoded" />
+
+        <TextView
+            android:id="@+id/target"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_margin="15dp"
+            android:layout_height="0dp"/>
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
