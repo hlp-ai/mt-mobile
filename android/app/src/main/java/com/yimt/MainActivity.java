@@ -39,15 +39,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
-import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
-import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
-import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+//import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
+//import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
+//import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
+//import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
+//import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.yimt.databinding.ActivityMainBinding;
-import com.yimt.ocr.TextRecognitionProcessor;
+//import com.yimt.ocr.TextRecognitionProcessor;
 import com.yimt.ocr.BitmapUtils;
-import com.yimt.ocr.VisionImageProcessor;
+//import com.yimt.ocr.VisionImageProcessor;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -100,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
     private String targetLangCode = "zh";
 
     private Uri imageUri;
-    private VisionImageProcessor imageProcessor;
+    //    private VisionImageProcessor imageProcessor;
     private String selectedMode = TEXT_RECOGNITION_LATIN;
     private boolean isStart = false;
     private MediaRecorder mr = null;
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        createImageProcessor();
+//        createImageProcessor();
 
         binding.voice.setOnClickListener(v -> {
             if(!isStart){
@@ -152,7 +152,22 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.PlayAudioButton).setOnClickListener(v -> {
-            getAudio();
+            String t = binding.TranslatedTV.getText().toString();
+            // 如果t为空，则提示用户输入文本
+            if (t.isEmpty()) {
+                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
+                return;
+            }
+            getAudio(t);
+        });
+
+        findViewById(R.id.playAudio).setOnClickListener(v -> {
+            String t = binding.SourceText.getText().toString();
+            if (t.isEmpty()) {
+                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
+                return;
+            }
+            getAudio(t);
         });
 
         // OCR button
@@ -303,6 +318,19 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        binding.CopySourceText.setOnClickListener(view -> {
+            if (!binding.SourceText.getText().toString().equals("")) {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("source text", binding.SourceText.getText());
+                clipboard.setPrimaryClip(clip);
+                Snackbar.make(
+                        binding.CopyTranslation,
+                        getString(R.string.copiedClipboard),
+                        Snackbar.LENGTH_LONG
+                ).show();
+            }
+        });
+
         // Switch language button
         binding.SwitchLanguages.setOnClickListener(view -> {
             String cacheLang = sourceLangCode;
@@ -356,7 +384,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private static final int REQUEST_CAMERA_PERMISSION = 200;
+
     private void startCameraIntentForResult() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            requestCameraPermission();
+        } else {
+            startCamera();
+        }
+    }
+
+    private void requestCameraPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+    }
+
+    private void startCamera() {
         // Clean up last time's image
         imageUri = null;
 
@@ -428,14 +470,20 @@ public class MainActivity extends AppCompatActivity {
             if (imageBitmap == null) {
                 return;
             }
-            if (imageProcessor != null) {
-                Log.d(TAG, "Starting OCR...");
-                imageProcessor.processBitmap(imageBitmap);
-            } else {
-                Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
-            }
+//            if (imageProcessor != null) {
+//                Log.d(TAG, "Starting OCR...");
+//                imageProcessor.processBitmap(imageBitmap);
+//            } else {
+//                Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
+//            }
             try{
-                getTextFromImage(imageBitmap);
+                // 检测源语言是否为自动检测，如果是，则弹窗提示用户指定语言
+                if (sourceLangCode.equals(AUTO_LANG_CODE)) {
+                    Toast.makeText(this, "请先指定语言再进行图片识别", Toast.LENGTH_LONG).show();
+                    chooseLang(true);
+                }else{
+                    getTextFromImage(imageBitmap);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -445,63 +493,63 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void createImageProcessor() {
-        if (imageProcessor != null) {
-            imageProcessor.stop();
-        }
-
-        try {
-            switch (selectedMode) {
-                case TEXT_RECOGNITION_LATIN:
-                    imageProcessor =
-                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), mhandler);
-                    break;
-                case TEXT_RECOGNITION_CHINESE:
-                    imageProcessor =
-                            new TextRecognitionProcessor(
-                                    this, new ChineseTextRecognizerOptions.Builder().build(), mhandler);
-                    break;
-                case TEXT_RECOGNITION_DEVANAGARI:
-                    imageProcessor =
-                            new TextRecognitionProcessor(
-                                    this, new DevanagariTextRecognizerOptions.Builder().build(), mhandler);
-                    break;
-                case TEXT_RECOGNITION_JAPANESE:
-                    imageProcessor =
-                            new TextRecognitionProcessor(
-                                    this, new JapaneseTextRecognizerOptions.Builder().build(), mhandler);
-                    break;
-                case TEXT_RECOGNITION_KOREAN:
-                    imageProcessor =
-                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(), mhandler);
-                    break;
-                default:
-                    Log.e(TAG, "Unknown selectedMode: " + selectedMode);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Can not create image processor: " + selectedMode, e);
-            Toast.makeText(
-                            getApplicationContext(),
-                            "Can not create image processor: " + e.getMessage(),
-                            Toast.LENGTH_LONG)
-                    .show();
-        }
-    }
+//    private void createImageProcessor() {
+//        if (imageProcessor != null) {
+//            imageProcessor.stop();
+//        }
+//
+//        try {
+//            switch (selectedMode) {
+//                case TEXT_RECOGNITION_LATIN:
+//                    imageProcessor =
+//                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), mhandler);
+//                    break;
+//                case TEXT_RECOGNITION_CHINESE:
+//                    imageProcessor =
+//                            new TextRecognitionProcessor(
+//                                    this, new ChineseTextRecognizerOptions.Builder().build(), mhandler);
+//                    break;
+//                case TEXT_RECOGNITION_DEVANAGARI:
+//                    imageProcessor =
+//                            new TextRecognitionProcessor(
+//                                    this, new DevanagariTextRecognizerOptions.Builder().build(), mhandler);
+//                    break;
+//                case TEXT_RECOGNITION_JAPANESE:
+//                    imageProcessor =
+//                            new TextRecognitionProcessor(
+//                                    this, new JapaneseTextRecognizerOptions.Builder().build(), mhandler);
+//                    break;
+//                case TEXT_RECOGNITION_KOREAN:
+//                    imageProcessor =
+//                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(), mhandler);
+//                    break;
+//                default:
+//                    Log.e(TAG, "Unknown selectedMode: " + selectedMode);
+//            }
+//        } catch (Exception e) {
+//            Log.e(TAG, "Can not create image processor: " + selectedMode, e);
+//            Toast.makeText(
+//                            getApplicationContext(),
+//                            "Can not create image processor: " + e.getMessage(),
+//                            Toast.LENGTH_LONG)
+//                    .show();
+//        }
+//    }
 
     @Override
     public void onResume() {
         super.onResume();
         Log.d(TAG, "onResume");
-        createImageProcessor();
+//        createImageProcessor();
         tryReloadAndDetectInImage();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        if (imageProcessor != null) {
-            imageProcessor.stop();
-        }
+//        if (imageProcessor != null) {
+//            imageProcessor.stop();
+//        }
     }
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -569,6 +617,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+        if (requestCode == REQUEST_CAMERA_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission has been granted. Start camera preview Activity.
+                startCamera();
+            } else {
+                // Permission request was denied.
+                Toast.makeText(this, "Camera permission was denied", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     //开始录制
@@ -579,7 +636,7 @@ public class MainActivity extends AppCompatActivity {
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-            File soundFile = new File(dir, System.currentTimeMillis() + ".3gp");
+            File soundFile = new File(dir, System.currentTimeMillis() + ".amr");
             if (!soundFile.exists()) {
                 try {
                     soundFile.createNewFile();
@@ -590,7 +647,7 @@ public class MainActivity extends AppCompatActivity {
 
             mr = new MediaRecorder();
             mr.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mr.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            mr.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
             mr.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
             audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
 
@@ -616,7 +673,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //将录制的音频传到后端，并返回所识别的文本
-     private String requestAudioToText(String audioFilePath, String serverUrl) {
+    private String requestAudioToText(String audioFilePath, String serverUrl) {
         String translatedText = "";
         try {
             // 读取音频文件并转换为 Base64 格式的字符串
@@ -625,11 +682,13 @@ public class MainActivity extends AppCompatActivity {
             // 创建一个 JSON 对象，包含音频数据和其他参数
             JSONObject json = new JSONObject();
             json.put("base64", audioBase64);
-            json.put("format", "3gp");
+            json.put("format", "wav");
             json.put("rate", 8000);
             json.put("channel", 1);
             json.put("token", "api_key");
             json.put("len", audioFile.length());
+            json.put("source", sourceLangCode);
+            json.put("target", targetLangCode);
 
             // 创建一个 HttpURLConnection 对象
             URL url = new URL(serverUrl+"/translate_audio2text");
@@ -715,7 +774,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private JSONObject requestAudioFromText(String server, String apiKey) throws Exception{
+    private JSONObject requestAudioFromText(String server, String apiKey, String text) throws Exception{
         String audio = "";
         String type = "";
         JSONObject responseJson;
@@ -732,13 +791,18 @@ public class MainActivity extends AppCompatActivity {
             conn.setRequestProperty("Content-Type", "application/json");
 
             JSONObject json = new JSONObject();
-            String q = binding.TranslatedTV.getText().toString().replace("&", "%26");
+//            String q = binding.TranslatedTV.getText().toString().replace("&", "%26");
+            String q = text.replace("&", "%26");
+            String Source = sourceLangCode;
+            String Target = targetLangCode;
 //            String data = "text=" + q + "&token="+ "123";
             if (!apiKey.equals(""))
 //                data += "&api_key=" + apiKey;
                 json.put("api_key", apiKey);
             json.put("text", q);
             json.put("token", "123");
+            json.put("source", Source);
+            json.put("target", Target);
             OutputStream os = conn.getOutputStream();
             os.write(json.toString().getBytes(StandardCharsets.UTF_8));
             os.close();
@@ -766,14 +830,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //接受服务器返回的音频数据并播放，接收的格式为base64
-    private void getAudio(){
+    private void getAudio(String text) {
         String server = settings.getString("server", DEFAULT_SERVER);
 
         Thread thread = new Thread(() -> {
             String error = "";
             JSONObject audioMsg = new JSONObject();
             try {
-                audioMsg = requestAudioFromText(server, "");
+                audioMsg = requestAudioFromText(server, "", text);
             } catch (Exception e) {
                 e.printStackTrace();
                 error = e.toString();
@@ -838,9 +902,13 @@ public class MainActivity extends AppCompatActivity {
 
             JSONObject json = new JSONObject();
             String base64 = encodeImageToBase64(imageBitmap);
+            String Source = sourceLangCode;
+            String Target = targetLangCode;
             json.put("base64", base64);
+            json.put("source", Source);
+            json.put("target", Target);
             if (!apiKey.equals(""))
-                json.put("api_key", apiKey);
+                json.put("token", apiKey);
             OutputStream os = conn.getOutputStream();
             os.write(json.toString().getBytes(StandardCharsets.UTF_8));
             os.close();
@@ -872,7 +940,9 @@ public class MainActivity extends AppCompatActivity {
             String error = "";
             String text = "";
             try {
-                text = requestTextFromImage(server, "", imageBitmap);
+                if (server != null) {
+                    text = requestTextFromImage(server, "api_key", imageBitmap);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 error = e.toString();
@@ -1039,7 +1109,7 @@ public class MainActivity extends AppCompatActivity {
             String sourceLang = AUTO_LANG_NAME;
             if (langMap.containsKey(sourceLangCode))
                 sourceLang = langMap.get(sourceLangCode);
-            binding.SourceLanguageTop.setText(sourceLang);
+//            binding.SourceLanguageTop.setText(sourceLang);
             binding.SourceLanguageBot.setText(sourceLang);
             settings.edit()
                     .putString("Source", sourceLangCode)
@@ -1061,7 +1131,7 @@ public class MainActivity extends AppCompatActivity {
                     selectedMode = TEXT_RECOGNITION_DEVANAGARI;
                     break;
             }
-            createImageProcessor();
+//            createImageProcessor();
         }
     }
 
@@ -1070,7 +1140,7 @@ public class MainActivity extends AppCompatActivity {
         if (!languages.equals("")) {
             HashMap<String, String> langMap = getLanguageMap(languages);
             String targetLang = langMap.get(targetLangCode);
-            binding.TargetLanguageTop.setText(targetLang);
+//            binding.TargetLanguageTop.setText(targetLang);
             binding.TargetLanguageBot.setText(targetLang);
             settings.edit()
                     .putString("Target", targetLangCode)
