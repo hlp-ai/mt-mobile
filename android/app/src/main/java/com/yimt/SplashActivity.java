@@ -4,14 +4,12 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.util.Log;
 import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class SplashActivity extends AppCompatActivity {
 
     private static final int SPLASH_DISPLAY_LENGTH = 5000; // 延迟三秒
-    private boolean isMainActivityStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,15 +34,8 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void goToMainActivity() {
-        if (isMainActivityStarted) {
-            return;
-        }
-        Log.d("SplashActivity", "goToMainActivity called");
         Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-        mainIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         SplashActivity.this.startActivity(mainIntent);
         SplashActivity.this.finish();
-
-        isMainActivityStarted = true;
     }
 }

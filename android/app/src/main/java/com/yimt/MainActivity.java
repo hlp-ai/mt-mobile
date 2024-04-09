@@ -106,22 +106,15 @@ public class MainActivity extends AppCompatActivity {
     private MediaRecorder mr = null;
     private String audioFile = null;
     private MediaPlayer mediaPlayer = null;
-    private static final String IS_REQUESTING_PERMISSION = "is_requesting_permission";
-    private boolean isRequestingPermission = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "Main onCreate");
 
         MainActivity activity = this;
         settings = getSharedPreferences("com.yimt", 0);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        if (savedInstanceState != null) {
-            isRequestingPermission = savedInstanceState.getBoolean(IS_REQUESTING_PERMISSION, false);
-        }
 
 //        createImageProcessor();
 
@@ -181,15 +174,9 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.select_image_button)
                 .setOnClickListener(
                         view -> {
-                            // 检查源语言是否为自动检测
-                            if (sourceLangCode.equals(AUTO_LANG_CODE)) {
-                                // 如果是，先弹出语言选择对话框
-                                Toast.makeText(this, "请先指定语言再进行图片识别", Toast.LENGTH_LONG).show();
-                                chooseLang(true);
-                            } else {
-                                // Menu for selecting either: a) take new photo b) select from existing
-                                PopupMenu popup = new PopupMenu(MainActivity.this, view);
-                                popup.setOnMenuItemClickListener(
+                            // Menu for selecting either: a) take new photo b) select from existing
+                            PopupMenu popup = new PopupMenu(MainActivity.this, view);
+                            popup.setOnMenuItemClickListener(
                                     menuItem -> {
                                         int itemId = menuItem.getItemId();
                                         if (itemId == R.id.select_images_from_local) {
@@ -201,10 +188,9 @@ public class MainActivity extends AppCompatActivity {
                                         }
                                         return false;
                                     });
-                                MenuInflater inflater = popup.getMenuInflater();
-                                inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
-                                popup.show();
-                            }
+                            MenuInflater inflater = popup.getMenuInflater();
+                            inflater.inflate(R.menu.camera_button_menu, popup.getMenu());
+                            popup.show();
                         });
 
         try {
@@ -252,9 +238,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (msg.what == TextRecog) {
                     Bundle data = msg.getData();
                     String text = (String) data.get("ocr_text");
-                    String translatedText = (String) data.get("translatedText");
                     binding.SourceText.setText(text);
-                    binding.TranslatedTV.setText(translatedText);
                 }else if (msg.what == AudioText){
                     Bundle data = msg.getData();
                     String text = (String) data.get("audioToText");
@@ -400,16 +384,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        // 如果正在请求权限，就保存一个标记
-        if (isRequestingPermission) {
-            outState.putBoolean(IS_REQUESTING_PERMISSION, true);
-        }
-    }
-
     private static final int REQUEST_CAMERA_PERMISSION = 200;
 
     private void startCameraIntentForResult() {
@@ -421,7 +395,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestCameraPermission() {
-        isRequestingPermission = true;
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
     }
 
@@ -449,10 +422,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (isRequestingPermission) {
-            // 如果正在请求权限，就不进行初始化操作
-            return;
-        }
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bitmap imageBitmap = null;
             try {
@@ -508,7 +477,13 @@ public class MainActivity extends AppCompatActivity {
 //                Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
 //            }
             try{
-                getTextFromImage(imageBitmap);
+                // 检测源语言是否为自动检测，如果是，则弹窗提示用户指定语言
+                if (sourceLangCode.equals(AUTO_LANG_CODE)) {
+                    Toast.makeText(this, "请先指定语言再进行图片识别", Toast.LENGTH_LONG).show();
+                    chooseLang(true);
+                }else{
+                    getTextFromImage(imageBitmap);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -597,7 +572,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
 
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 201;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
 
     private void startRecord() {
         // Check if the Record Audio permission is already available.
@@ -612,14 +587,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestRecordAudioPermission() {
         // Record Audio permission has not been granted yet. Request it directly.
-        isRequestingPermission = false;
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_RECORD_AUDIO_PERMISSION);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        isRequestingPermission = false;
         if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission has been granted. Start recording
@@ -913,9 +886,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private JSONObject requestTextFromImage(String server, String apiKey, Bitmap imageBitmap) throws Exception {
+    private String requestTextFromImage(String server, String apiKey, Bitmap imageBitmap) throws Exception {
         String text = "";
-        JSONObject responseJson;
         URL url = new URL(server + "/translate_image2text");
         Log.d("yimt", "Request text from " + url);
 
@@ -953,13 +925,12 @@ public class MainActivity extends AppCompatActivity {
             conn.disconnect();
 
             // 解析响应数据并获取 translatedText 字段的值
-            responseJson = new JSONObject(response.toString());
+            JSONObject responseJson = new JSONObject(response.toString());
             text = responseJson.getString("translatedText");
         } finally {
             conn.disconnect();
         }
-//        return text;
-        return responseJson;
+        return text;
     }
 
     private void getTextFromImage(Bitmap imageBitmap) throws Exception {
@@ -967,10 +938,10 @@ public class MainActivity extends AppCompatActivity {
 
         Thread thread = new Thread(() -> {
             String error = "";
-            JSONObject result = new JSONObject();
+            String text = "";
             try {
                 if (server != null) {
-                    result = requestTextFromImage(server, "api_key", imageBitmap);
+                    text = requestTextFromImage(server, "api_key", imageBitmap);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -978,12 +949,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             Bundle bundle = new Bundle();
-            try {
-                bundle.putString("ocr_text", result.getString("originalText"));
-                bundle.putString("translatedText", result.getString("translatedText"));
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
+            bundle.putString("ocr_text", text);
             bundle.putString("serverError", error);
             Message msg = new Message();
             msg.setData(bundle);
