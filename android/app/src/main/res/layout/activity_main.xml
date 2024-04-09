@@ -54,33 +54,34 @@
                     android:background="?attr/colorPrimary"
                     android:orientation="horizontal"
                     android:paddingHorizontal="25dp"
-                    android:paddingBottom="5dp"
-                    tools:ignore="UselessParent">
+                    android:paddingBottom="5dp">
 
                     <TextView
                         android:id="@+id/SourceLanguageBot"
                         android:layout_width="0dp"
                         android:layout_height="50dp"
-                        android:layout_gravity="start|center_vertical"
+                        android:layout_gravity="center_vertical"
                         android:layout_weight="1"
                         android:autoSizeMaxTextSize="20sp"
                         android:autoSizeMinTextSize="8sp"
                         android:autoSizeTextType="uniform"
+                        android:background="@drawable/left_round"
                         android:contentDescription="@string/chooseSLanguage"
                         android:gravity="center"
                         android:maxLines="1"
-                        android:paddingStart="0dp"
-                        android:paddingLeft="0dp"
-                        android:paddingEnd="0dp"
-                        android:paddingRight="0dp"
+                        android:paddingStart="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingRight="10dp"
                         android:textAlignment="center"
-                        android:textColor="?frontColor" />
+                        android:textColor="?colorPrimary" />
 
                     <ImageButton
                         android:id="@+id/SwitchLanguages"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:layout_gravity="center_vertical"
+                        android:layout_toEndOf="@id/SourceLanguageBot"
                         android:gravity="center"
                         android:background="@drawable/round_button"
                         android:contentDescription="@string/switchLanguages"
@@ -94,28 +95,31 @@
                         android:layout_height="50dp"
                         android:layout_weight="1"
                         android:layout_gravity="center"
+                        android:layout_toEndOf="@id/SwitchLanguages"
                         android:autoSizeMaxTextSize="20sp"
                         android:autoSizeMinTextSize="8sp"
                         android:autoSizeTextType="uniform"
+                        android:background="@drawable/right_round"
                         android:contentDescription="@string/chooseTLanguage"
                         android:gravity="center"
                         android:maxLines="1"
-                        android:paddingStart="0dp"
-                        android:paddingLeft="0dp"
-                        android:paddingEnd="0dp"
-                        android:paddingRight="0dp"
+                        android:paddingStart="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingEnd="10dp"
+                        android:paddingRight="10dp"
                         android:textAlignment="center"
-                        android:textColor="?frontColor" />
+                        android:layout_toStartOf="@id/RemoveSourceText"
+                        android:textColor="?colorPrimary" />
 
                     <ImageButton
                         android:id="@+id/RemoveSourceText"
                         android:layout_width="25dp"
                         android:layout_height="25dp"
-                        android:layout_marginStart="25dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentRight="true"
+                        android:layout_marginStart="20dp"
                         android:layout_marginTop="20dp"
                         android:layout_marginBottom="20dp"
-                        android:layout_marginEnd="0dp"
-                        android:layout_gravity="end|center_vertical"
                         android:background="#00FFFFFF"
                         android:contentDescription="@string/removeText"
                         android:src="@drawable/close"
@@ -146,14 +150,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_gravity="center"
             android:background="@drawable/left_top_round_white"
             android:orientation="vertical">
 
             <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal">
+                android:layout_height="wrap_content">
 
                 <Button
                     android:id="@+id/select_image_button"
@@ -164,7 +166,7 @@
                     android:layout_toStartOf="@+id/voice"
                     android:background="#00FFFFFF"
                     android:text="@string/ocr"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp" />
 
                 <Button
                     android:id="@+id/voice"
@@ -175,7 +177,7 @@
                     android:layout_toStartOf="@+id/StartTranslation"
                     android:background="#00FFFFFF"
                     android:text="@string/voice"
-                    android:textSize="18sp" />
+                    android:textSize="18sp"/>
 
                 <Button
                     android:id="@+id/StartTranslation"
@@ -192,8 +194,10 @@
                     android:id="@+id/playAudio"
                     android:layout_width="55dp"
                     android:layout_height="30dp"
+                    android:layout_centerVertical="true"
                     android:layout_marginVertical="20dp"
                     android:layout_toStartOf="@+id/CopySourceText"
+                    android:layout_toLeftOf="@+id/CopySourceText"
                     android:background="#00FFFFFF"
                     android:text="@string/playVoice"
                     android:textSize="18sp" />
@@ -202,7 +206,7 @@
                     android:id="@+id/CopySourceText"
                     android:layout_width="40dp"
                     android:layout_height="25dp"
-                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
                     android:layout_centerVertical="true"
                     android:layout_marginVertical="20dp"
                     android:background="#00FFFFFF"
@@ -244,7 +248,6 @@
         android:background="?attr/colorPrimary"
         android:orientation="horizontal"
         android:paddingHorizontal="25dp"
-        android:gravity="center_horizontal"
         android:paddingBottom="5dp">
 
         <Button
@@ -265,6 +268,7 @@
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:layout_marginVertical="20dp"
+            android:layout_marginEnd="20dp"
             android:background="#00FFFFFF"
             android:contentDescription="@string/copy"
             android:src="@drawable/copy"
