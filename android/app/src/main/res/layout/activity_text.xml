@@ -1,121 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="25dp"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:id="@+id/MidView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center">
-
-                <TextView
-                    android:id="@+id/StartTranslation"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="翻译" />
-
-                <TextView
-                    android:id="@+id/RemoveSourceText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="删除" />
-
-            </LinearLayout>
-
-            <EditText
-                android:id="@+id/SourceText"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="top"
-                android:hint="这里输入..."
-                android:inputType="textMultiLine"
-                android:background="@null" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/BottomView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <ProgressBar
-                android:id="@+id/translationPending"
-                style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:indeterminate="true"
-                android:visibility="gone" />
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:id="@+id/TranslatedTV"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textIsSelectable="true" />
-
-            </ScrollView>
-        </LinearLayout>
-    </LinearLayout>
-
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:layout_gravity="bottom">
+        android:layout_weight="1">
+
+        <EditText
+            android:id="@+id/SourceText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top"
+            android:hint="这里输入..."
+            android:inputType="textMultiLine"
+            android:background="@null" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/StartTranslation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="翻译"
+            android:layout_marginHorizontal="8dp"/>
+
+        <TextView
+            android:id="@+id/RemoveSourceText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="删除"
+            android:layout_marginHorizontal="8dp"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/TranslatedTV"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textIsSelectable="true" />
+
+        </ScrollView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
 
         <TextView
             android:id="@+id/CopyTranslation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
-            android:text="拷贝"/>
+            android:text="拷贝"
+            android:layout_marginHorizontal="8dp"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/ReadTranslation"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:maxLines="1"
+            android:text="朗读"
+            android:layout_marginHorizontal="8dp"/>
+    </LinearLayout>
 
-            <TextView
-                android:id="@+id/SourceLanguageBot"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:maxLines="1"
-                android:text="源语言"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="12dp">
 
-            <TextView
-                android:id="@+id/TargetLanguageBot"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:maxLines="1"
-                android:text="目标语言"/>
+        <TextView
+            android:id="@+id/SourceLanguageBot"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:maxLines="1"
+            android:text="源语言"
+            android:layout_marginHorizontal="8dp"/>
 
-        </LinearLayout>
-
-
+        <TextView
+            android:id="@+id/TargetLanguageBot"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:maxLines="1"
+            android:text="目标语言"
+            android:layout_marginHorizontal="8dp"/>
     </LinearLayout>
 
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>
