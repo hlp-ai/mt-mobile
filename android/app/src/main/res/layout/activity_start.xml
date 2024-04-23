@@ -9,24 +9,32 @@
     tools:context=".StartActivity">
 
     <TextView
+        android:id="@+id/text_input"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:textSize="20dp"
-        android:text="键盘输入" />
+        android:text="键盘" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:textSize="20dp"
-        android:text="语音输入" />
+        android:text="话筒" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="20dp"
         android:textSize="20dp"
-        android:text="图像输入" />
+        android:text="相机" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:textSize="20dp"
+        android:text="图库" />
 
 </LinearLayout>
