@@ -10,7 +10,7 @@
         android:layout_weight="1">
 
         <EditText
-            android:id="@+id/SourceText"
+            android:id="@+id/textSource"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="top"
@@ -29,6 +29,7 @@
             android:id="@+id/StartTranslation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="18dp"
             android:text="翻译"
             android:layout_marginHorizontal="8dp"/>
 
@@ -36,6 +37,7 @@
             android:id="@+id/RemoveSourceText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="18dp"
             android:text="删除"
             android:layout_marginHorizontal="8dp"/>
 
@@ -51,7 +53,7 @@
             android:layout_height="wrap_content">
 
             <TextView
-                android:id="@+id/TranslatedTV"
+                android:id="@+id/textTarget"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textIsSelectable="true" />
@@ -70,6 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
+            android:textSize="18dp"
             android:text="拷贝"
             android:layout_marginHorizontal="8dp"/>
 
@@ -78,6 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
+            android:textSize="18dp"
             android:text="朗读"
             android:layout_marginHorizontal="8dp"/>
     </LinearLayout>
@@ -89,20 +93,16 @@
         android:gravity="center"
         android:layout_marginTop="12dp">
 
-        <TextView
-            android:id="@+id/SourceLanguageBot"
+        <Spinner
+            android:id="@+id/spinnerSrcLang"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:maxLines="1"
-            android:text="源语言"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp"/>
 
-        <TextView
-            android:id="@+id/TargetLanguageBot"
+        <Spinner
+            android:id="@+id/spinnerTgtLang"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:maxLines="1"
-            android:text="目标语言"
+            android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp"/>
     </LinearLayout>
 
