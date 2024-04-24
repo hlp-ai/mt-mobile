@@ -7,10 +7,12 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,7 +28,9 @@ import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityTextBinding;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 
 public class TextActivity extends AppCompatActivity {
@@ -55,23 +59,23 @@ public class TextActivity extends AppCompatActivity {
         binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
         binding.spinnerTgtLang.setSelection(1);
 
-        // 话筒按钮
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 200);
+
+        // 话筒按钮: 长按录音
         binding.MicroPhone.setOnLongClickListener(v -> {
-            Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
-
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 200);
-
+            // Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
             startRecording();
             isRecording = true;
 
             return true;
         });
 
+        // 话筒按钮: 松开结束
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
             if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                Toast.makeText(TextActivity.this, "松开", Toast.LENGTH_LONG).show();
                 stopRecording();
+                Toast.makeText(TextActivity.this, "录音完成", Toast.LENGTH_LONG).show();
             }
 
             return false;
@@ -127,6 +131,10 @@ public class TextActivity extends AppCompatActivity {
                 ).show();
             }
         });
+
+        binding.ReadTranslation.setOnClickListener(v -> {
+            playAudio();
+        });
     }
 
     //开始录音
@@ -163,6 +171,26 @@ public class TextActivity extends AppCompatActivity {
             mediaRecorder.reset();
             mediaRecorder.release();
             mediaRecorder = null;
+        }
+    }
+
+    // 播放声音
+    private void playAudio(){
+        try {
+            // Initialize and start the MediaPlayer
+            MediaPlayer mediaPlayer = new MediaPlayer();
+            File testAudioFile = new File(new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "audio"), "test.amr");
+            mediaPlayer.setDataSource(testAudioFile.getAbsolutePath());
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+
+            // Add an event listener to release resources when playback is complete
+            mediaPlayer.setOnCompletionListener(mp -> {
+                mediaPlayer.release();
+                // tempAudioFile.delete(); // Delete the temporary file
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
