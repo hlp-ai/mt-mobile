@@ -22,14 +22,7 @@
         android:theme="@style/LightTheme"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".TextActivity"
-            android:exported="false">
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity
-            android:name=".StartActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
