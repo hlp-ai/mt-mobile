@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CHOOSE_IMAGE = 101;
     private static final int REQUEST_CROP_IMAGE = 102;
 
+    private static final int REQUEST_CAMERA_PERMISSION = 200;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +81,14 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return false;
+        });
+
+        // 相机按钮
+        binding.Camera.setOnClickListener(view -> {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+
+
         });
 
         // 相册按钮
