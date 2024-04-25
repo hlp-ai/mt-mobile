@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -35,12 +36,14 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
     private String[] languages = new String[] {"自动检测", "中文", "英文"};
 
-    private boolean isRecording = false;
     private MediaRecorder mediaRecorder = null;
     private String audioFile = null;
+    private Uri imageUri = null;
 
     private static final int REQUEST_CHOOSE_IMAGE = 101;
     private static final int REQUEST_CROP_IMAGE = 102;
+    private static final int REQUEST_IMAGE_CAPTURE = 103;
+    private static final int REQUEST_WRITE_STORAGE = 104;
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
 
@@ -68,8 +71,6 @@ public class MainActivity extends AppCompatActivity {
         binding.MicroPhone.setOnLongClickListener(v -> {
             // Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
             startRecording();
-            isRecording = true;
-
             return true;
         });
 
@@ -86,9 +87,26 @@ public class MainActivity extends AppCompatActivity {
         // 相机按钮
         binding.Camera.setOnClickListener(view -> {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.CAMERA},
+                        REQUEST_CAMERA_PERMISSION);
 
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        REQUEST_WRITE_STORAGE);
+            }
 
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.TITLE, "New Picture");
+                values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
+                imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
         });
 
         // 相册按钮
@@ -135,17 +153,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Uri imageUri;
-        if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {
-            // Bitmap imageBitmap = null;
+        if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {  // 成功从相册选择图片
             imageUri = data.getData();
             Toast.makeText(MainActivity.this, imageUri.toString(), Toast.LENGTH_LONG).show();
             crop(imageUri);
-        } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {
+        } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {  // 成功剪切图片
             Toast.makeText(MainActivity.this, "CROP Image Done", Toast.LENGTH_LONG).show();
             imageUri = data.getData();
-            //Toast.makeText(TextActivity.this, imageUri.toString(), Toast.LENGTH_LONG).show();
-        }else {
+        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {  // 成功拍照
+            Toast.makeText(MainActivity.this, "CAPTURE DONE", Toast.LENGTH_LONG).show();
+            crop(imageUri);
+        } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
