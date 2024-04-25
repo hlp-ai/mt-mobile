@@ -94,6 +94,15 @@
         android:gravity="center">
 
         <TextView
+            android:id="@+id/Share"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textSize="18sp"
+            android:text="分享"
+            android:layout_marginHorizontal="8dp"/>
+
+        <TextView
             android:id="@+id/CopyTranslation"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
