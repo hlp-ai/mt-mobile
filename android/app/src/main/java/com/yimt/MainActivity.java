@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                     if (translation.isEmpty() && serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     binding.textTarget.setText(translation);
-                    //binding.translationPending.setVisibility(View.GONE);
+                    binding.Pending.setVisibility(View.GONE);
                 }
             }
         };
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
         binding.StartTranslation.setOnClickListener(view -> {
             if (!binding.textSource.getText().toString().equals("")) {
                 translateText();
-                // binding.translationPending.setVisibility(View.VISIBLE);
+                binding.Pending.setVisibility(View.VISIBLE);
             }
 
         });
