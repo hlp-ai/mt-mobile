@@ -14,7 +14,11 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -27,13 +31,33 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityMainBinding;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
+import javax.net.ssl.HttpsURLConnection;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+
+    private Handler mhandler;
+    private static final int TRANSLATE_MSG =  201;
+
+    private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
+    final static int CONN_TIMEOUT = 15000;
+    final static int READ_TIMEOUT = 15000;
+
     private String[] languages = new String[] {"自动检测", "中文", "英文"};
 
     private MediaRecorder mediaRecorder = null;
@@ -55,6 +79,22 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        mhandler = new Handler(Looper.getMainLooper()) {
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+
+                if (msg.what == TRANSLATE_MSG) {
+                    Bundle lc = msg.getData();
+                    String translation = lc.getString("translation");
+                    String serverError = lc.getString("error");
+                    if (translation.isEmpty() && serverError.length() > 0)
+                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
+                    binding.textTarget.setText(translation);
+                    //binding.translationPending.setVisibility(View.GONE);
+                }
+            }
+        };
+
         ArrayAdapter<String> srcLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, languages);
         srcLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerSrcLang.setAdapter(srcLangAdapter);
@@ -66,6 +106,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 200);
+
+        // 翻译按钮
+        binding.StartTranslation.setOnClickListener(view -> {
+            if (!binding.textSource.getText().toString().equals("")) {
+                translateText();
+                // binding.translationPending.setVisibility(View.VISIBLE);
+            }
+
+        });
 
         // 话筒按钮: 长按录音
         binding.MicroPhone.setOnLongClickListener(v -> {
@@ -186,6 +235,71 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("noFaceDetection", false);//前置摄像头
         startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
     }
+
+    private String requestTranslate(String server, String apiKey) throws Exception {
+        String translation = "";
+
+        URL url = new URL(server + "/translate");
+        Log.d("yimt", "Translate using " + url);
+
+        HttpURLConnection conn = null;
+        try {
+            conn = server.startsWith("https") ?
+                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(CONN_TIMEOUT);
+            conn.setReadTimeout(READ_TIMEOUT);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("accept", "application/json");
+
+            String q = binding.textSource.getText().toString().replace("&", "%26");
+            String source = "en"; // binding.spinnerSrcLang.getSelectedItem().toString();
+            String target = "zh";  // binding.spinnerTgtLang.getSelectedItem().toString();
+            String data = "q=" + q + "&source=" + source + "&target=" + target;
+            if (!apiKey.equals(""))
+                data += "&api_key=" + apiKey;
+
+            byte[] out = data.getBytes(StandardCharsets.UTF_8);
+            OutputStream stream = conn.getOutputStream();
+            stream.write(out);
+
+            InputStream inputStream = new DataInputStream(conn.getInputStream());
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            translation = new JSONObject(reader.readLine()).getString("translatedText");
+        } finally {
+            conn.disconnect();
+        }
+
+        return translation;
+    }
+
+    private void translateText() {
+        if (!binding.textSource.getText().toString().equals("")) {
+            String server = DEFAULT_SERVER;
+            String apiKey = "";
+
+            Thread thread = new Thread(() -> {
+                String translation = "";
+                String error = "";
+                try {
+                    translation = requestTranslate(server, apiKey);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    error = e.toString();
+                }
+
+                Bundle bundle = new Bundle();
+                bundle.putString("translation", translation);
+                bundle.putString("error", error);
+                Message msg = new Message();
+                msg.setData(bundle);
+                msg.what = TRANSLATE_MSG;
+                mhandler.sendMessage(msg);
+            });
+
+            thread.start();
+        }
+    }
+
 
     //开始录音
     private void startRecording() {
