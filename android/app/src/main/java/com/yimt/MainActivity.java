@@ -9,11 +9,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -119,7 +117,12 @@ public class MainActivity extends AppCompatActivity {
         // 话筒按钮: 长按录音
         binding.MicroPhone.setOnLongClickListener(v -> {
             // Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
-            startRecording();
+            try {
+                startRecording();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return true;
         });
 
@@ -128,6 +131,7 @@ public class MainActivity extends AppCompatActivity {
             if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
                 stopRecording();
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
+                return true;
             }
 
             return false;
@@ -207,7 +211,9 @@ public class MainActivity extends AppCompatActivity {
 
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
-            playAudio();
+            String translation = binding.textTarget.getText().toString();
+            //if(translation.length() > 0)
+                // Utils.playAudio("", "");
         });
     }
 
@@ -303,61 +309,54 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     //开始录音
-    private void startRecording() {
-        if (mediaRecorder == null) {
-            try{
-                File dir = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "audio");
-                if (!dir.exists())
-                    dir.mkdirs();
+    private String startRecording() throws IOException {
+        File dir = new File(getExternalFilesDir(null), "audio");
+        if (!dir.exists())
+            dir.mkdirs();
 
-                File soundFile = new File(dir, System.currentTimeMillis() + ".amr");
-                if (!soundFile.exists())
-                    soundFile.createNewFile();
+        File soundFile = new File(dir, System.currentTimeMillis() + ".amr");
+        if (!soundFile.exists())
+            soundFile.createNewFile();
 
-                mediaRecorder = new MediaRecorder();
-                mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-                mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
-                mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-                audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
-                mediaRecorder.setOutputFile(audioFile);
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
+        audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
+        mediaRecorder.setOutputFile(audioFile);
 
-                mediaRecorder.prepare();
-                mediaRecorder.start();
-            }catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        mediaRecorder.prepare();
+        mediaRecorder.start();
+
+        return audioFile;
     }
 
     // 停止录音
     private void stopRecording(){
-        if (mediaRecorder!=null){
-            mediaRecorder.stop();
-            mediaRecorder.reset();
-            mediaRecorder.release();
-            mediaRecorder = null;
-        }
+        mediaRecorder.stop();
+        mediaRecorder.reset();
+        mediaRecorder.release();
+        mediaRecorder = null;
     }
 
-    // 播放声音
-    private void playAudio(){
-        try {
-            // Initialize and start the MediaPlayer
-            MediaPlayer mediaPlayer = new MediaPlayer();
-            File testAudioFile = new File(new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "audio"), "test.amr");
-            mediaPlayer.setDataSource(testAudioFile.getAbsolutePath());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-
-            // Add an event listener to release resources when playback is complete
-            mediaPlayer.setOnCompletionListener(mp -> {
-                mediaPlayer.release();
-                // tempAudioFile.delete(); // Delete the temporary file
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+//    // 播放声音
+//    private void playAudio(){
+//        try {
+//            // Initialize and start the MediaPlayer
+//            MediaPlayer mediaPlayer = new MediaPlayer();
+//            File testAudioFile = new File(new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "audio"), "test.amr");
+//            mediaPlayer.setDataSource(testAudioFile.getAbsolutePath());
+//            mediaPlayer.prepare();
+//            mediaPlayer.start();
+//
+//            // Add an event listener to release resources when playback is complete
+//            mediaPlayer.setOnCompletionListener(mp -> {
+//                mediaPlayer.release();
+//                // tempAudioFile.delete(); // Delete the temporary file
+//            });
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
