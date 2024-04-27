@@ -182,10 +182,13 @@ public class MainActivity extends AppCompatActivity {
 
         // 分享按钮
         binding.Share.setOnClickListener(view -> {
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/plain");
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "分享测试");
-            startActivity(Intent.createChooser(shareIntent, "分享翻译"));
+            String translation = binding.textTarget.getText().toString();
+            if(translation.length() > 0){
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/plain");
+                shareIntent.putExtra(Intent.EXTRA_TEXT, translation);
+                startActivity(Intent.createChooser(shareIntent, "分享翻译"));
+            }
         });
 
         // 拷贝按钮
