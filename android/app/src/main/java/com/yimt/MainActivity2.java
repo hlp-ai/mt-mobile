@@ -12,24 +12,17 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.PopupMenu;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
@@ -39,15 +32,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
-//import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
-//import com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions;
-//import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
-//import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions;
-//import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 import com.yimt.databinding.ActivityMain2Binding;
-//import com.yimt.ocr.TextRecognitionProcessor;
 import com.yimt.ocr.BitmapUtils;
-//import com.yimt.ocr.VisionImageProcessor;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -66,10 +52,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.net.ssl.HttpsURLConnection;
 
 
@@ -85,12 +67,9 @@ public class MainActivity2 extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE = 1001;
     private static final int REQUEST_CHOOSE_IMAGE = 1002;
     private static final int REQUEST_CROP_IMAGE = 1003;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private static final String TAG = "MainActivity";
-    private static final String TEXT_RECOGNITION_LATIN = "Text Recognition Latin"; //en
-    private static final String TEXT_RECOGNITION_CHINESE = "Text Recognition Chinese (Beta)"; //zh
-    private static final String TEXT_RECOGNITION_DEVANAGARI = "Text Recognition Devanagari (Beta)"; //sa
-    private static final String TEXT_RECOGNITION_JAPANESE = "Text Recognition Japanese (Beta)"; //ja
-    private static final String TEXT_RECOGNITION_KOREAN = "Text Recognition Korean (Beta)"; //ko
+
     private final String AUTO_LANG_CODE = "auto";
     private final String AUTO_LANG_NAME = "AutoDetect";
     private SharedPreferences settings;
@@ -100,8 +79,7 @@ public class MainActivity2 extends AppCompatActivity {
     private String targetLangCode = "zh";
 
     private Uri imageUri;
-    //    private VisionImageProcessor imageProcessor;
-    private String selectedMode = TEXT_RECOGNITION_LATIN;
+
     private boolean isStart = false;
     private MediaRecorder mr = null;
     private String audioFile = null;
@@ -116,24 +94,12 @@ public class MainActivity2 extends AppCompatActivity {
         binding = ActivityMain2Binding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-//        createImageProcessor();
-
         binding.voice.setOnClickListener(v -> {
             if(!isStart){
                 startRecord();
-                handler.post(updateRecordingTextRunnable); // 开始更新文本
                 isStart = true;
-
-                // 设置按钮的 autoSizeTextType 属性为 uniform，并设置最小和最大文本大小
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    binding.voice.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_UNIFORM);
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    binding.voice.setAutoSizeTextTypeUniformWithConfiguration(11, 18, 1, TypedValue.COMPLEX_UNIT_SP);
-                }
             }else{
                 stopRecord();
-                handler.removeCallbacks(updateRecordingTextRunnable); // 停止更新文本
                 binding.voice.setTextSize(18);
                 binding.voice.setText("录音");
                 isStart = false;
@@ -142,27 +108,12 @@ public class MainActivity2 extends AppCompatActivity {
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
-
-                // 设置按钮的 autoSizeTextType 属性为 none，并将文本大小设置回原始大小
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    binding.voice.setAutoSizeTextTypeWithDefaults(TextView.AUTO_SIZE_TEXT_TYPE_NONE);
-                }
-                binding.voice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
             }
         });
 
         findViewById(R.id.PlayAudioButton).setOnClickListener(v -> {
             String t = binding.TranslatedTV.getText().toString();
             // 如果t为空，则提示用户输入文本
-            if (t.isEmpty()) {
-                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
-                return;
-            }
-            getAudio(t);
-        });
-
-        findViewById(R.id.playAudio).setOnClickListener(v -> {
-            String t = binding.SourceText.getText().toString();
             if (t.isEmpty()) {
                 Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
                 return;
@@ -201,13 +152,6 @@ public class MainActivity2 extends AppCompatActivity {
 
         String languages = settings.getString("languages", "");
 
-        if (!languages.equals("")) {
-            sourceLangCode = settings.getString("Source", AUTO_LANG_CODE);
-            setSourceLang();
-            targetLangCode = settings.getString("Target", "zh");
-            setTargetLang();
-        }
-
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
@@ -228,12 +172,6 @@ public class MainActivity2 extends AppCompatActivity {
                         Toast.makeText(activity, serverError, Toast.LENGTH_LONG).show();
                     } else {
                         //Setting languages needs to happen before setSourceLang and setTargetLang
-                        settings.edit()
-                                .putString("languages", languages)
-                                .apply();
-
-                        setSourceLang();
-                        setTargetLang();
                     }
                 } else if (msg.what == TextRecog) {
                     Bundle data = msg.getData();
@@ -252,33 +190,6 @@ public class MainActivity2 extends AppCompatActivity {
                 }
             }
         };
-
-        // translate on input, disabled now
-        boolean translate_on_input = false;
-        if (translate_on_input) {
-            binding.SourceText.addTextChangedListener(new TextWatcher() {
-                private static final int DELAY_MILLIS = 4000;
-                final Handler handler = new Handler(Looper.getMainLooper());
-                final Runnable workRunnable = () -> translateText();
-
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    handler.removeCallbacks(workRunnable);
-                    handler.postDelayed(workRunnable, DELAY_MILLIS);
-                    binding.translationPending.setVisibility(View.VISIBLE);
-                    if (editable.toString().equals(""))
-                        binding.translationPending.setVisibility(View.GONE);
-                }
-            });
-        }
 
         // Translate button
         binding.StartTranslation.setOnClickListener(view -> {
@@ -316,71 +227,6 @@ public class MainActivity2 extends AppCompatActivity {
                         Snackbar.LENGTH_LONG
                 ).show();
             }
-        });
-
-        binding.CopySourceText.setOnClickListener(view -> {
-            if (!binding.SourceText.getText().toString().equals("")) {
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("source text", binding.SourceText.getText());
-                clipboard.setPrimaryClip(clip);
-                Snackbar.make(
-                        binding.CopyTranslation,
-                        getString(R.string.copiedClipboard),
-                        Snackbar.LENGTH_LONG
-                ).show();
-            }
-        });
-
-        // Switch language button
-        binding.SwitchLanguages.setOnClickListener(view -> {
-            String cacheLang = sourceLangCode;
-            sourceLangCode = targetLangCode;
-            setSourceLang();
-            if (cacheLang.equals(AUTO_LANG_CODE))
-                cacheLang = "en";
-            targetLangCode = cacheLang;
-            setTargetLang();
-            translateText();
-        });
-
-        // Choose source language button
-        binding.SourceLanguageBot.setOnClickListener(view -> chooseLang(true));
-
-        // Choose target language button
-        binding.TargetLanguageBot.setOnClickListener(view -> chooseLang(false));
-
-        // Settings dialog
-        binding.info.setOnClickListener(view -> {
-            View about = getLayoutInflater().inflate(R.layout.about, null);
-            EditText serverET = about.findViewById(R.id.Server);
-            EditText apiET = about.findViewById(R.id.Api);
-            Spinner spinner = about.findViewById(R.id.spinner_ocr);
-            final String[] server = {settings.getString("server", DEFAULT_SERVER)};
-            String apiKey = settings.getString("apiKey", "");
-            serverET.setText(server[0]);
-            apiET.setText(apiKey);
-            AlertDialog.Builder popUp = new AlertDialog.Builder(activity, R.style.AlertDialog);
-            popUp.setView(about)
-                    .setTitle(getString(R.string.settingTitle))
-                    .setPositiveButton(getString(R.string.save), (dialogInterface, i) -> {
-                        server[0] = serverET.getText().toString();
-                        settings.edit()
-                                .putString("server", server[0])
-                                .putString("apiKey", apiET.getText().toString())
-                                .apply();
-
-                        selectedMode = spinner.getSelectedItem().toString();
-                        Toast.makeText(this, selectedMode, Toast.LENGTH_LONG).show();
-
-                        //Retrieve languages into shared preferences
-                        try {
-                            retrieveLanguages();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    })
-                    .setNegativeButton(getString(R.string.close), null)
-                    .show();
         });
     }
 
@@ -470,17 +316,11 @@ public class MainActivity2 extends AppCompatActivity {
             if (imageBitmap == null) {
                 return;
             }
-//            if (imageProcessor != null) {
-//                Log.d(TAG, "Starting OCR...");
-//                imageProcessor.processBitmap(imageBitmap);
-//            } else {
-//                Log.e(TAG, "Null imageProcessor, please check adb logs for imageProcessor creation error");
-//            }
+
             try{
                 // 检测源语言是否为自动检测，如果是，则弹窗提示用户指定语言
                 if (sourceLangCode.equals(AUTO_LANG_CODE)) {
                     Toast.makeText(this, "请先指定语言再进行图片识别", Toast.LENGTH_LONG).show();
-                    chooseLang(true);
                 }else{
                     getTextFromImage(imageBitmap);
                 }
@@ -492,87 +332,6 @@ public class MainActivity2 extends AppCompatActivity {
             imageUri = null;
         }
     }
-
-//    private void createImageProcessor() {
-//        if (imageProcessor != null) {
-//            imageProcessor.stop();
-//        }
-//
-//        try {
-//            switch (selectedMode) {
-//                case TEXT_RECOGNITION_LATIN:
-//                    imageProcessor =
-//                            new TextRecognitionProcessor(this, new TextRecognizerOptions.Builder().build(), mhandler);
-//                    break;
-//                case TEXT_RECOGNITION_CHINESE:
-//                    imageProcessor =
-//                            new TextRecognitionProcessor(
-//                                    this, new ChineseTextRecognizerOptions.Builder().build(), mhandler);
-//                    break;
-//                case TEXT_RECOGNITION_DEVANAGARI:
-//                    imageProcessor =
-//                            new TextRecognitionProcessor(
-//                                    this, new DevanagariTextRecognizerOptions.Builder().build(), mhandler);
-//                    break;
-//                case TEXT_RECOGNITION_JAPANESE:
-//                    imageProcessor =
-//                            new TextRecognitionProcessor(
-//                                    this, new JapaneseTextRecognizerOptions.Builder().build(), mhandler);
-//                    break;
-//                case TEXT_RECOGNITION_KOREAN:
-//                    imageProcessor =
-//                            new TextRecognitionProcessor(this, new KoreanTextRecognizerOptions.Builder().build(), mhandler);
-//                    break;
-//                default:
-//                    Log.e(TAG, "Unknown selectedMode: " + selectedMode);
-//            }
-//        } catch (Exception e) {
-//            Log.e(TAG, "Can not create image processor: " + selectedMode, e);
-//            Toast.makeText(
-//                            getApplicationContext(),
-//                            "Can not create image processor: " + e.getMessage(),
-//                            Toast.LENGTH_LONG)
-//                    .show();
-//        }
-//    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume");
-//        createImageProcessor();
-        tryReloadAndDetectInImage();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-//        if (imageProcessor != null) {
-//            imageProcessor.stop();
-//        }
-    }
-
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Runnable updateRecordingTextRunnable = new Runnable() {
-        private int dotCount = 0;
-
-        @Override
-        public void run() {
-            dotCount = (dotCount % 3) + 1;
-            String text = "录音中";
-            for (int i = 0; i < dotCount; i++) {
-                text += ".";
-            }
-//            binding.voice.setTextSize(11);
-            binding.voice.setText(text);
-            if (isStart) {
-                handler.postDelayed(this, 500); // 每500毫秒更新一次
-            }
-        }
-    };
-
-
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
 
     private void startRecord() {
         // Check if the Record Audio permission is already available.
@@ -728,7 +487,6 @@ public class MainActivity2 extends AppCompatActivity {
         return translatedText;
     }
 
-
     private byte[] readFileToByteArray(String filePath) throws IOException {
         try (FileInputStream fileInputStream = new FileInputStream(filePath);
              ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
@@ -772,7 +530,6 @@ public class MainActivity2 extends AppCompatActivity {
 
         thread.start();
     }
-
 
     private JSONObject requestAudioFromText(String server, String apiKey, String text) throws Exception{
         String audio = "";
@@ -967,19 +724,6 @@ public class MainActivity2 extends AppCompatActivity {
         return Base64.encodeToString(imageBytes, Base64.DEFAULT);
     }
 
-    private HashMap<String, String> getLanguageMap(String languages) {
-        HashMap<String, String> langMap = new HashMap<String, String>();
-        String[] str = languages.split(",");
-        for (String s : str) {
-            if (!s.equals("")) {
-                String[] pair = s.split(":");
-                langMap.put(pair[0], pair[1]);
-            }
-        }
-
-        return langMap;
-    }
-
     private String requestLanguages(String server) throws Exception {
         String languages = "";
         URL url = new URL(server + "/languages");
@@ -1099,98 +843,6 @@ public class MainActivity2 extends AppCompatActivity {
             });
 
             thread.start();
-        }
-    }
-
-    private void setSourceLang() {
-        String languages = settings.getString("languages", "");
-        if (!languages.equals("")) {
-            HashMap<String, String> langMap = getLanguageMap(languages);
-            String sourceLang = AUTO_LANG_NAME;
-            if (langMap.containsKey(sourceLangCode))
-                sourceLang = langMap.get(sourceLangCode);
-//            binding.SourceLanguageTop.setText(sourceLang);
-            binding.SourceLanguageBot.setText(sourceLang);
-            settings.edit()
-                    .putString("Source", sourceLangCode)
-                    .apply();
-            switch (sourceLangCode) {
-                case "zh":
-                    selectedMode = TEXT_RECOGNITION_CHINESE;
-                    break;
-                case "en":
-                    selectedMode = TEXT_RECOGNITION_LATIN;
-                    break;
-                case "ko":
-                    selectedMode = TEXT_RECOGNITION_KOREAN;
-                    break;
-                case "ja":
-                    selectedMode = TEXT_RECOGNITION_JAPANESE;
-                    break;
-                case "sa":
-                    selectedMode = TEXT_RECOGNITION_DEVANAGARI;
-                    break;
-            }
-//            createImageProcessor();
-        }
-    }
-
-    private void setTargetLang() {
-        String languages = settings.getString("languages", "");
-        if (!languages.equals("")) {
-            HashMap<String, String> langMap = getLanguageMap(languages);
-            String targetLang = langMap.get(targetLangCode);
-//            binding.TargetLanguageTop.setText(targetLang);
-            binding.TargetLanguageBot.setText(targetLang);
-            settings.edit()
-                    .putString("Target", targetLangCode)
-                    .apply();
-        }
-    }
-
-    private void chooseLang(Boolean source) {
-        String languages = settings.getString("languages", "");
-        ArrayList<String> langCodes = new ArrayList<String>();
-        langCodes.add(AUTO_LANG_CODE);
-        ArrayList<String> langNames = new ArrayList<String>();
-        langNames.add(AUTO_LANG_NAME);
-        if (!languages.equals("")) {
-            HashMap<String, String> langMap = getLanguageMap(languages);
-            for (Map.Entry<String, String> e : langMap.entrySet()) {
-                langCodes.add(e.getKey());
-                langNames.add(e.getValue());
-            }
-        }
-
-        if (source) {
-            new AlertDialog.Builder(
-                    this, R.style.AlertDialog
-            )
-                    .setTitle(getString(R.string.chooseLang))
-                    .setItems(langNames.toArray(new String[langNames.size()]), (dialog, which) -> {
-                        String c = langCodes.get(which);
-                        sourceLangCode = c;
-                        setSourceLang();
-                        translateText();
-                    })
-                    .setPositiveButton(getString(R.string.abort), (dialog, which) -> dialog.cancel())
-                    .show();
-        } else {
-            langCodes.remove(0);
-            langNames.remove(0);
-            new AlertDialog.Builder(
-                    this, R.style.AlertDialog
-            )
-                    .setTitle(getString(R.string.chooseLang))
-                    .setItems(langNames.toArray(new String[langNames.size()]), (dialog, which) -> {
-                        String c = langCodes.get(which);
-                        targetLangCode = c;
-                        setTargetLang();
-
-                        translateText();
-                    })
-                    .setPositiveButton(getString(R.string.abort), (dialog, which) -> dialog.cancel())
-                    .show();
         }
     }
 }
