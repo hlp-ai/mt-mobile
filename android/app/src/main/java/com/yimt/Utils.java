@@ -53,7 +53,8 @@ public class Utils {
         });
     }
 
-    public static JSONObject request(String urlString, String data) throws IOException, JSONException {
+    // 服务请求
+    public static JSONObject requestService(String urlString, String data) throws IOException, JSONException {
         int CONN_TIMEOUT = 15000;
         int READ_TIMEOUT = 15000;
 

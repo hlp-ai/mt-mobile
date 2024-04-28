@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,20 +31,13 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityMainBinding;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-
-import javax.net.ssl.HttpsURLConnection;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -50,13 +45,14 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
 
     private Handler mhandler;
-    private static final int TRANSLATE_MSG =  201;
+    private static final int TRANSLATE_MSG = 201;
+    private static final int READ_TEXT_MSG = 202;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
     final static int CONN_TIMEOUT = 15000;
     final static int READ_TIMEOUT = 15000;
 
-    private String[] languages = new String[] {"自动检测", "中文", "英文"};
+    private String[] languages = new String[]{"自动检测", "中文", "英文"};
 
     private MediaRecorder mediaRecorder = null;
     private String audioFile = null;
@@ -89,6 +85,11 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     binding.textTarget.setText(translation);
                     binding.Pending.setVisibility(View.GONE);
+                } else if (msg.what == READ_TEXT_MSG) {
+                    Bundle data = msg.getData();
+                    String audio = (String) data.get("audio");
+                    String type = (String) data.get("type");
+                    playAudio(audio, type);
                 }
             }
         };
@@ -107,8 +108,9 @@ public class MainActivity extends AppCompatActivity {
 
         // 翻译按钮
         binding.StartTranslation.setOnClickListener(view -> {
-            if (!binding.textSource.getText().toString().equals("")) {
-                translateText();
+            String text = binding.textSource.getText().toString();
+            if (!text.equals("")) {
+                translateText(text);
                 binding.Pending.setVisibility(View.VISIBLE);
             }
 
@@ -128,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 话筒按钮: 松开结束
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
-            if(motionEvent.getAction() == MotionEvent.ACTION_UP) {
+            if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                 stopRecording();
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
                 return true;
@@ -144,8 +146,7 @@ public class MainActivity extends AppCompatActivity {
                         new String[]{Manifest.permission.CAMERA},
                         REQUEST_CAMERA_PERMISSION);
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         REQUEST_WRITE_STORAGE);
@@ -187,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         // 分享按钮
         binding.Share.setOnClickListener(view -> {
             String translation = binding.textTarget.getText().toString();
-            if(translation.length() > 0){
+            if (translation.length() > 0) {
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
                 shareIntent.putExtra(Intent.EXTRA_TEXT, translation);
@@ -212,8 +213,12 @@ public class MainActivity extends AppCompatActivity {
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
             String translation = binding.textTarget.getText().toString();
-            //if(translation.length() > 0)
-                // Utils.playAudio("", "");
+            if (translation.isEmpty()) {
+                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            readTranslation(translation);
         });
     }
 
@@ -245,67 +250,117 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
     }
 
-    private String requestTranslate(String server, String apiKey) throws Exception {
-        String translation = "";
+    private void translateText(String text) {
+        String server = DEFAULT_SERVER;
+        String apiKey = "";
 
-        URL url = new URL(server + "/translate");
-        Log.d("yimt", "Translate using " + url);
+        Thread thread = new Thread(() -> {
+            String translation = "";
+            String error = "";
+            try {
+                translation = requestTranslate(server, apiKey, text);
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
 
-        HttpURLConnection conn = null;
-        try {
-            conn = server.startsWith("https") ?
-                    (HttpsURLConnection) url.openConnection() : (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(CONN_TIMEOUT);
-            conn.setReadTimeout(READ_TIMEOUT);
-            conn.setRequestMethod("POST");
-            conn.setRequestProperty("accept", "application/json");
+            Bundle bundle = new Bundle();
+            bundle.putString("translation", translation);
+            bundle.putString("error", error);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = TRANSLATE_MSG;
+            mhandler.sendMessage(msg);
+        });
 
-            String q = binding.textSource.getText().toString().replace("&", "%26");
-            String source = "en"; // binding.spinnerSrcLang.getSelectedItem().toString();
-            String target = "zh";  // binding.spinnerTgtLang.getSelectedItem().toString();
-            String data = "q=" + q + "&source=" + source + "&target=" + target;
-            if (!apiKey.equals(""))
-                data += "&api_key=" + apiKey;
-
-            byte[] out = data.getBytes(StandardCharsets.UTF_8);
-            OutputStream stream = conn.getOutputStream();
-            stream.write(out);
-
-            InputStream inputStream = new DataInputStream(conn.getInputStream());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            translation = new JSONObject(reader.readLine()).getString("translatedText");
-        } finally {
-            conn.disconnect();
-        }
-
-        return translation;
+        thread.start();
     }
 
-    private void translateText() {
-        if (!binding.textSource.getText().toString().equals("")) {
-            String server = DEFAULT_SERVER;
-            String apiKey = "";
+    private String requestTranslate(String server, String apiKey, String text) throws Exception {
+        String url = server + "/translate";
+        Log.d("yimt", "Translate using " + url);
 
-            Thread thread = new Thread(() -> {
-                String translation = "";
-                String error = "";
-                try {
-                    translation = requestTranslate(server, apiKey);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    error = e.toString();
-                }
+        JSONObject json = new JSONObject();
+        if (!apiKey.equals(""))
+            json.put("api_key", apiKey);
+        String q = text.replace("&", "%26");
+        String source = "en"; // binding.spinnerSrcLang.getSelectedItem().toString();
+        String target = "zh";  // binding.spinnerTgtLang.getSelectedItem().toString();
+        json.put("q", q);
+        json.put("source", source);
+        json.put("target", target);
 
-                Bundle bundle = new Bundle();
-                bundle.putString("translation", translation);
-                bundle.putString("error", error);
-                Message msg = new Message();
-                msg.setData(bundle);
-                msg.what = TRANSLATE_MSG;
-                mhandler.sendMessage(msg);
+        JSONObject responseJson = Utils.requestService(url, json.toString());
+
+        return responseJson.getString("translatedText");
+    }
+
+    private void readTranslation(String text) {
+        String server = DEFAULT_SERVER;
+
+        Thread thread = new Thread(() -> {
+            String error = "";
+            JSONObject audioMsg = new JSONObject();
+            try {
+                audioMsg = requestTTS(server, "", text);
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            try {
+                bundle.putString("audio", audioMsg.getString("base64"));
+                bundle.putString("type", audioMsg.getString("type"));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
+            bundle.putString("error", error);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = READ_TEXT_MSG;
+            mhandler.sendMessage(msg);
+        });
+        thread.start();
+    }
+
+    private JSONObject requestTTS(String server, String apiKey, String text) throws Exception {
+        JSONObject responseJson;
+        String url = server + "/translate_text2audio";
+        Log.d("yimt", "Request audio from " + url);
+
+        JSONObject json = new JSONObject();
+        if (!apiKey.equals(""))
+            json.put("api_key", apiKey);
+        json.put("text", text);
+        json.put("token", "123");
+        json.put("lang", "zho");
+
+        responseJson = Utils.requestService(url, json.toString());
+
+        return responseJson;
+    }
+
+    private void playAudio(String audio, String type) {
+        byte[] audioData = Base64.decode(audio, Base64.DEFAULT);
+        try {
+            File tempAudioFile = File.createTempFile("temp_audio", "." + type);
+
+            OutputStream os = new FileOutputStream(tempAudioFile);
+            os.write(audioData);
+            os.close();
+
+            MediaPlayer mediaPlayer = new MediaPlayer();
+            mediaPlayer.setDataSource(tempAudioFile.getAbsolutePath());
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+
+            mediaPlayer.setOnCompletionListener(mp -> {
+                mediaPlayer.release();
+                tempAudioFile.delete(); // Delete the temporary file
             });
-
-            thread.start();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -333,30 +388,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 停止录音
-    private void stopRecording(){
+    private void stopRecording() {
         mediaRecorder.stop();
         mediaRecorder.reset();
         mediaRecorder.release();
         mediaRecorder = null;
     }
 
-//    // 播放声音
-//    private void playAudio(){
-//        try {
-//            // Initialize and start the MediaPlayer
-//            MediaPlayer mediaPlayer = new MediaPlayer();
-//            File testAudioFile = new File(new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "audio"), "test.amr");
-//            mediaPlayer.setDataSource(testAudioFile.getAbsolutePath());
-//            mediaPlayer.prepare();
-//            mediaPlayer.start();
-//
-//            // Add an event listener to release resources when playback is complete
-//            mediaPlayer.setOnCompletionListener(mp -> {
-//                mediaPlayer.release();
-//                // tempAudioFile.delete(); // Delete the temporary file
-//            });
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 }
