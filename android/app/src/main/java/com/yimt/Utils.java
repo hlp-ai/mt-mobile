@@ -86,6 +86,17 @@ public class Utils {
         return new JSONObject(response.toString());
     }
 
+    public static String lang2code(String lang) {
+        if(lang.equals("自动检测"))
+            return "auto";
+        if(lang.equals("中文"))
+            return "zh";
+        if(lang.equals("英文"))
+            return "en";
+
+        return null;
+    }
+
 //    // 开始录制声音
 //    public static String startRecording(File soundFile) throws IOException {
 //        if (!soundFile.exists())
