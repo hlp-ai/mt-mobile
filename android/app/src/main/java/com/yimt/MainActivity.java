@@ -87,9 +87,14 @@ public class MainActivity extends AppCompatActivity {
                     binding.Pending.setVisibility(View.GONE);
                 } else if (msg.what == READ_TEXT_MSG) {
                     Bundle data = msg.getData();
-                    String audio = (String) data.get("audio");
-                    String type = (String) data.get("type");
-                    playAudio(audio, type);
+                    String serverError = data.getString("error");
+                    if (serverError.length() > 0)
+                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
+                    else{
+                        String audio = (String) data.get("audio");
+                        String type = (String) data.get("type");
+                        playAudio(audio, type);
+                    }
                 }
             }
         };
@@ -309,13 +314,15 @@ public class MainActivity extends AppCompatActivity {
             }
 
             Bundle bundle = new Bundle();
-            try {
-                bundle.putString("audio", audioMsg.getString("base64"));
-                bundle.putString("type", audioMsg.getString("type"));
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
             bundle.putString("error", error);
+            if(error.isEmpty()){
+                try {
+                    bundle.putString("audio", audioMsg.getString("base64"));
+                    bundle.putString("type", audioMsg.getString("type"));
+                } catch (JSONException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             Message msg = new Message();
             msg.setData(bundle);
             msg.what = READ_TEXT_MSG;
@@ -327,7 +334,6 @@ public class MainActivity extends AppCompatActivity {
     private JSONObject requestTTS(String server, String apiKey, String text) throws Exception {
         JSONObject responseJson;
         String url = server + "/translate_text2audio";
-        Log.d("yimt", "Request audio from " + url);
 
         JSONObject json = new JSONObject();
         if (!apiKey.equals(""))
