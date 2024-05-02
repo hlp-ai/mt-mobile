@@ -1,5 +1,7 @@
 package com.yimt;
 
+import static com.yimt.Utils.encodeAudioFileToBase64;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -34,10 +36,16 @@ import com.yimt.databinding.ActivityMainBinding;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -47,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler mhandler;
     private static final int TRANSLATE_MSG = 201;
     private static final int READ_TEXT_MSG = 202;
+    private static final int ASR_MSG = 203;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
     final static int CONN_TIMEOUT = 15000;
@@ -55,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
     private String[] languages = new String[]{"自动检测", "中文", "英文"};
 
     private MediaRecorder mediaRecorder = null;
-    private String audioFile = null;
+    private String audioFile = null;  // 录音文件
     private Uri imageUri = null;
 
     private static final int REQUEST_CHOOSE_IMAGE = 101;
@@ -95,6 +104,10 @@ public class MainActivity extends AppCompatActivity {
                         String type = (String) data.get("type");
                         playAudio(audio, type);
                     }
+                } else if (msg.what == ASR_MSG){
+                    Bundle data = msg.getData();
+                    String text = (String) data.get("audioToText");
+                    binding.textSource.setText((text));
                 }
             }
         };
@@ -138,6 +151,9 @@ public class MainActivity extends AppCompatActivity {
             if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                 stopRecording();
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
+
+                getTextForAudio(audioFile);
+
                 return true;
             }
 
@@ -332,7 +348,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private JSONObject requestTTS(String server, String apiKey, String text) throws Exception {
-        JSONObject responseJson;
         String url = server + "/translate_text2audio";
 
         JSONObject json = new JSONObject();
@@ -342,9 +357,56 @@ public class MainActivity extends AppCompatActivity {
         json.put("token", "123");
         json.put("lang", "zho");
 
-        responseJson = Utils.requestService(url, json.toString());
+        JSONObject responseJson = Utils.requestService(url, json.toString());
 
         return responseJson;
+    }
+
+    private void getTextForAudio(String filePath){
+        String server = DEFAULT_SERVER;
+
+        Thread thread = new Thread(() -> {
+            String error = "";
+            String audioToText = "";
+            try {
+                audioToText = requestAudioToText(server, filePath);
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString("error", error);
+            if(error.isEmpty())
+                bundle.putString("audioToText", audioToText);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = ASR_MSG;
+            mhandler.sendMessage(msg);
+        });
+
+        thread.start();
+    }
+
+    private String requestAudioToText(String server, String audioFilePath) throws IOException, JSONException {
+        String audioBase64 = encodeAudioFileToBase64(audioFilePath);
+
+        // 创建一个 JSON 对象，包含音频数据和其他参数
+        JSONObject json = new JSONObject();
+        json.put("base64", audioBase64);
+        json.put("format", "wav");
+        json.put("rate", 8000);
+        json.put("channel", 1);
+        json.put("token", "api_key");
+        json.put("len", audioFile.length());
+        json.put("source", "en");
+        json.put("target", "zh");
+
+        String url = server + "/translate_audio2text";
+
+        JSONObject responseJson = Utils.requestService(url, json.toString());
+
+        return responseJson.getString("translatedText");
     }
 
     private void playAudio(String audio, String type) {

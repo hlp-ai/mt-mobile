@@ -8,7 +8,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -96,6 +98,25 @@ public class Utils {
             return "en";
 
         return null;
+    }
+
+    public static String encodeAudioFileToBase64(String filePath) throws IOException {
+        byte[] audioData = readFileToByteArray(filePath);
+        return Base64.encodeToString(audioData, Base64.DEFAULT);
+    }
+
+    private static byte[] readFileToByteArray(String filePath) throws IOException {
+        try (FileInputStream fileInputStream = new FileInputStream(filePath);
+             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                byteArrayOutputStream.write(buffer, 0, bytesRead);
+            }
+
+            return byteArrayOutputStream.toByteArray();
+        }
     }
 
 //    // 开始录制声音
