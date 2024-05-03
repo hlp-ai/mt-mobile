@@ -1,6 +1,7 @@
 package com.yimt;
 
 import static com.yimt.Utils.encodeAudioFileToBase64;
+import static com.yimt.Utils.encodeImageToBase64;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -11,6 +12,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -32,12 +35,14 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityMainBinding;
+import com.yimt.ocr.BitmapUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +51,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+
+import javax.net.ssl.HttpsURLConnection;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -56,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int TRANSLATE_MSG = 201;
     private static final int READ_TEXT_MSG = 202;
     private static final int ASR_MSG = 203;
+    private static final int OCR_MSG = 204;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
     final static int CONN_TIMEOUT = 15000;
@@ -106,8 +114,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } else if (msg.what == ASR_MSG){
                     Bundle data = msg.getData();
-                    String text = (String) data.get("audioToText");
-                    binding.textSource.setText((text));
+                    String serverError = data.getString("error");
+                    if (serverError.length() > 0)
+                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
+                    else{
+                        String text = (String) data.get("audioToText");
+                        binding.textSource.setText((text));
+                    }
+
+                } else if (msg.what == OCR_MSG) {
+                    Bundle data = msg.getData();
+                    String serverError = data.getString("error");
+                    if (serverError.length() > 0)
+                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
+                    else{
+                        String text = (String) data.get("ocr_text");
+                        binding.textSource.setText(text);
+                    }
                 }
             }
         };
@@ -123,6 +146,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 200);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED)
+            // 请求权限
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    210);
 
         // 翻译按钮
         binding.StartTranslation.setOnClickListener(view -> {
@@ -186,9 +216,18 @@ public class MainActivity extends AppCompatActivity {
 
         // 相册按钮
         binding.Gallery.setOnClickListener(view -> {
-            Intent pickIntent = new Intent(Intent.ACTION_PICK, null);
-            pickIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-            startActivityForResult(pickIntent, REQUEST_CHOOSE_IMAGE);
+//            Intent pickIntent = new Intent(Intent.ACTION_PICK, null);
+//            pickIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
+//            startActivityForResult(pickIntent, REQUEST_CHOOSE_IMAGE);
+
+//            Intent intent = new Intent();
+//            intent.setType("image/*");
+//            intent.setAction(Intent.ACTION_GET_CONTENT);
+//            startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
+
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            startActivityForResult(intent, REQUEST_CHOOSE_IMAGE);
         });
 
         // 删除按钮
@@ -246,29 +285,96 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {  // 成功从相册选择图片
-            imageUri = data.getData();
-            Toast.makeText(MainActivity.this, imageUri.toString(), Toast.LENGTH_LONG).show();
-            crop(imageUri);
+//            imageUri = data.getData();
+//            Toast.makeText(MainActivity.this, imageUri.toString(), Toast.LENGTH_LONG).show();
+//            crop(imageUri);
+
+//            Bitmap imageBitmap = null;
+//            imageUri = data.getData();
+//            try {
+//                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            crop(imageBitmap);
+
+//            Bitmap imageBitmap = null;
+//            imageUri = data.getData();
+//            try {
+//                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            crop(imageBitmap);
+
+            Uri selectedImageUri = data.getData();
+
+            Log.d("yimt", "Select IMAGE " + selectedImageUri);
+
+            crop(selectedImageUri);
         } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {  // 成功剪切图片
             Toast.makeText(MainActivity.this, "CROP Image Done", Toast.LENGTH_LONG).show();
-            imageUri = data.getData();
+//            Uri croppedImageUri = data.getData();
+
+            Bundle extra = data.getExtras();
+            Bitmap bitmap = extra.getParcelable("data");
+
+//            Log.d("yimt", "Cropped IMAGE " + croppedImageUri);
+//
+            getTextForImage(bitmap);
         } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {  // 成功拍照
-            Toast.makeText(MainActivity.this, "CAPTURE DONE", Toast.LENGTH_LONG).show();
-            crop(imageUri);
+//            Toast.makeText(MainActivity.this, "CAPTURE DONE", Toast.LENGTH_LONG).show();
+//            crop(imageUri);
+            Bitmap imageBitmap = null;
+            try {
+                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            crop(imageBitmap);
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
-    private void crop(Uri imageUri) {
+
+    private Bitmap decodeUriAsBitmap(Uri uri) {
+        Bitmap bitmap = null;
+        try {
+            bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return bitmap;
+    }
+
+    // 系统裁剪功能调用
+    private void crop(Bitmap bitmap) {
         Intent intent = new Intent("com.android.camera.action.CROP");
-        //Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(TextActivity.this.getContentResolver(), bitmap, "1", "1"));
-        intent.setDataAndType(imageUri, "image/*");//设置要缩放的图片Uri和类型
+        Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1", "1"));
+        intent.setDataAndType(uri, "image/*"); //设置要缩放的图片Uri和类型
         intent.putExtra("crop", "true");
-        intent.putExtra("scale", true);//缩放
-        intent.putExtra("return-data", false);//当为true的时候就返回缩略图，false就不返回，需要通过Uri
-        intent.putExtra("noFaceDetection", false);//前置摄像头
-        startActivityForResult(intent, REQUEST_CROP_IMAGE);//打开剪裁Activity
+        intent.putExtra("scale", true); //缩放
+        intent.putExtra("return-data", false); //当为true的时候就返回缩略图，false就不返回，需要通过Uri
+        intent.putExtra("noFaceDetection", false); //前置摄像头
+        startActivityForResult(intent, REQUEST_CROP_IMAGE); //打开剪裁Activity
+    }
+
+    private void crop(Uri uri) {
+        Log.d("yimt", "crop");
+        Intent intent = new Intent("com.android.camera.action.CROP");
+        //Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1", "1"));
+        intent.setDataAndType(uri, "image/*"); //设置要缩放的图片Uri和类型
+        intent.putExtra("crop", "true");
+        intent.putExtra("scale", true); //缩放
+        intent.putExtra("return-data", true); //当为true的时候就返回缩略图，false就不返回，需要通过Uri
+        intent.putExtra("noFaceDetection", false); //前置摄像头
+
+//        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+//        intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+
+        startActivityForResult(intent, REQUEST_CROP_IMAGE); //打开剪裁Activity
     }
 
     private void translateText(String text) {
@@ -407,6 +513,100 @@ public class MainActivity extends AppCompatActivity {
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
         return responseJson.getString("translatedText");
+    }
+
+//    private void getTextForImage(){
+//        if (imageUri == null)
+//            return;
+//
+//        Bitmap imageBitmap = null;
+//        try {
+//            imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        if (imageBitmap == null)
+//            return;
+//
+//        String server = DEFAULT_SERVER;
+//
+//        Bitmap finalImageBitmap = imageBitmap;
+//        Thread thread = new Thread(() -> {
+//            String error = "";
+//            String text = "";
+//            try {
+//                if (server != null) {
+//                    text = requestTextForImage(server, "api_key", finalImageBitmap);
+//                }
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                error = e.toString();
+//            }
+//
+//            Bundle bundle = new Bundle();
+//            bundle.putString("error", error);
+//            if(error.isEmpty())
+//                bundle.putString("ocr_text", text);
+//            Message msg = new Message();
+//            msg.setData(bundle);
+//            msg.what = OCR_MSG;
+//            mhandler.sendMessage(msg);
+//        });
+//
+//        thread.start();
+//    }
+
+    private void getTextForImage(Bitmap imageBitmap){
+        Log.d("yimt", "getTextForImage");
+
+        String server = DEFAULT_SERVER;
+
+        Bitmap finalImageBitmap = imageBitmap;
+        Thread thread = new Thread(() -> {
+            String error = "";
+            String text = "";
+            try {
+                if (server != null) {
+                    text = requestTextForImage(server, "api_key", finalImageBitmap);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString("error", error);
+            if(error.isEmpty())
+                bundle.putString("ocr_text", text);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = OCR_MSG;
+            mhandler.sendMessage(msg);
+        });
+
+        thread.start();
+    }
+
+    private String requestTextForImage(String server, String apiKey, Bitmap imageBitmap) throws IOException, JSONException {
+        String text = "";
+        String url = server + "/translate_image2text";
+
+        JSONObject json = new JSONObject();
+        String base64 = encodeImageToBase64(imageBitmap);
+        String Source = "en";
+        String Target = "zh";
+        json.put("base64", base64);
+        json.put("source", Source);
+        json.put("target", Target);
+        if (!apiKey.equals(""))
+            json.put("token", apiKey);
+
+        JSONObject responseJson = Utils.requestService(url, json.toString());
+
+        text = responseJson.getString("translatedText");
+
+        return text;
     }
 
     private void playAudio(String audio, String type) {

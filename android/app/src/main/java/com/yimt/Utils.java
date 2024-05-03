@@ -1,5 +1,6 @@
 package com.yimt;
 
+import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.util.Base64;
@@ -117,6 +118,13 @@ public class Utils {
 
             return byteArrayOutputStream.toByteArray();
         }
+    }
+
+    public static String encodeImageToBase64(Bitmap imageBitmap) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(imageBytes, Base64.DEFAULT);
     }
 
 //    // 开始录制声音
