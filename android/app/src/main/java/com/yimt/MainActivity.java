@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (msg.what == OCR_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
+                    binding.Pending.setVisibility(View.GONE);
                     if (serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     else{
@@ -194,23 +195,13 @@ public class MainActivity extends AppCompatActivity {
 
         // 相机按钮
         binding.Camera.setOnClickListener(view -> {
-//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-//                ActivityCompat.requestPermissions(this,
-//                        new String[]{Manifest.permission.CAMERA},
-//                        REQUEST_CAMERA_PERMISSION);
-
-//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-//                ActivityCompat.requestPermissions(this,
-//                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-//                        REQUEST_WRITE_STORAGE);
-//            }
-
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Images.Media.TITLE, "New Picture");
                 values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
                 imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                Log.d("yimt", imageUri.toString());
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
             }
@@ -326,6 +317,7 @@ public class MainActivity extends AppCompatActivity {
 //            Log.d("yimt", "Cropped IMAGE " + croppedImageUri);
 //
             getTextForImage(bitmap);
+            binding.Pending.setVisibility(View.VISIBLE);
         } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {  // 成功拍照
 //            Toast.makeText(MainActivity.this, "CAPTURE DONE", Toast.LENGTH_LONG).show();
 //            crop(imageUri);
@@ -370,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void crop(Uri uri) {
-        Log.d("yimt", "crop");
+        Log.d("yimt", "crop " + uri);
         Intent intent = new Intent("com.android.camera.action.CROP");
         //Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1", "1"));
         intent.setDataAndType(uri, "image/*"); //设置要缩放的图片Uri和类型
