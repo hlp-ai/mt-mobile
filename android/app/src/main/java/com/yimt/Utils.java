@@ -127,21 +127,4 @@ public class Utils {
         return Base64.encodeToString(imageBytes, Base64.DEFAULT);
     }
 
-//    // 开始录制声音
-//    public static String startRecording(File soundFile) throws IOException {
-//        if (!soundFile.exists())
-//            soundFile.createNewFile();
-//
-//        MediaRecorder mr = new MediaRecorder();
-//        mr.setAudioSource(MediaRecorder.AudioSource.MIC);
-//        mr.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
-//        mr.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-//        String audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
-//
-//        mr.setOutputFile(audioFile);
-//        mr.prepare();
-//        mr.start();
-//
-//        return audioFile;
-//    }
 }

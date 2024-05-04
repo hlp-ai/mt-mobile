@@ -40,19 +40,11 @@ import com.yimt.ocr.BitmapUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-
-import javax.net.ssl.HttpsURLConnection;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -135,24 +127,34 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        // 添加下拉语言列表
         ArrayAdapter<String> srcLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, languages);
         srcLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerSrcLang.setAdapter(srcLangAdapter);
 
+        // 添加下拉语言列表
         ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, languages);
         tgtLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
         binding.spinnerTgtLang.setSelection(1);
 
+        // 申请录音权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 200);
 
+        // 申请写卡权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED)
             // 请求权限
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     210);
+
+        // 申请拍照权限
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA},
+                    REQUEST_CAMERA_PERMISSION);
 
         // 翻译按钮
         binding.StartTranslation.setOnClickListener(view -> {
@@ -192,16 +194,16 @@ public class MainActivity extends AppCompatActivity {
 
         // 相机按钮
         binding.Camera.setOnClickListener(view -> {
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.CAMERA},
-                        REQUEST_CAMERA_PERMISSION);
+//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.CAMERA},
+//                        REQUEST_CAMERA_PERMISSION);
 
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        REQUEST_WRITE_STORAGE);
-            }
+//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//                ActivityCompat.requestPermissions(this,
+//                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+//                        REQUEST_WRITE_STORAGE);
+//            }
 
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -313,8 +315,10 @@ public class MainActivity extends AppCompatActivity {
 
             crop(selectedImageUri);
         } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {  // 成功剪切图片
-            Toast.makeText(MainActivity.this, "CROP Image Done", Toast.LENGTH_LONG).show();
+            // Toast.makeText(MainActivity.this, "CROP Image Done", Toast.LENGTH_LONG).show();
 //            Uri croppedImageUri = data.getData();
+
+            Log.d("yimt", "Crop done.");
 
             Bundle extra = data.getExtras();
             Bitmap bitmap = extra.getParcelable("data");
@@ -325,13 +329,17 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {  // 成功拍照
 //            Toast.makeText(MainActivity.this, "CAPTURE DONE", Toast.LENGTH_LONG).show();
 //            crop(imageUri);
-            Bitmap imageBitmap = null;
-            try {
-                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            crop(imageBitmap);
+//            Bitmap imageBitmap = null;
+//            try {
+//                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//            crop(imageBitmap);
+
+            Log.d("yimt", "Take IMAGE " + imageUri);
+
+            crop(imageUri);
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
