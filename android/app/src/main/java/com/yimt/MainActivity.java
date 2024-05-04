@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
                     if (translation.isEmpty() && serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     binding.textTarget.setText(translation);
-                    binding.Pending.setVisibility(View.GONE);
+                    binding.Pending.setVisibility(View.GONE);  // 停止显示进度条
                 } else if (msg.what == READ_TEXT_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
@@ -107,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (msg.what == ASR_MSG){
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
                     if (serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     else{
@@ -117,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (msg.what == OCR_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
-                    binding.Pending.setVisibility(View.GONE);
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
                     if (serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     else{
@@ -162,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
             String text = binding.textSource.getText().toString();
             if (!text.equals("")) {
                 translateText(text);
-                binding.Pending.setVisibility(View.VISIBLE);
+                binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
             }
 
         });
@@ -186,6 +187,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
 
                 getTextForAudio(audioFile);
+
+                binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
                 return true;
             }
