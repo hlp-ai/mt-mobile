@@ -73,9 +73,11 @@ public class AudioUtils {
 
     // 停止录音
     public void stopRecording() {
-        mediaRecorder.stop();
-        mediaRecorder.reset();
-        mediaRecorder.release();
-        mediaRecorder = null;
+        if(mediaRecorder != null){
+            mediaRecorder.stop();
+            mediaRecorder.reset();
+            mediaRecorder.release();
+            mediaRecorder = null;
+        }
     }
 }

@@ -408,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
-        return responseJson.getString("translatedText");
+        return responseJson.getString("text");
     }
 
     private void getTextForImage(String filePath){
@@ -459,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
-        text = responseJson.getString("translatedText");
+        text = responseJson.getString("text");
 
         return text;
     }
