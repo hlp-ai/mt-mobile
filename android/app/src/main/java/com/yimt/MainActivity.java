@@ -14,12 +14,10 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Base64;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,11 +33,7 @@ import com.yimt.databinding.ActivityMainBinding;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -96,7 +90,12 @@ public class MainActivity extends AppCompatActivity {
                     else{
                         String audio = (String) data.get("audio");
                         String type = (String) data.get("type");
-                        playAudio(audio, type);
+                        // playAudio(audio, type);
+                        try {
+                            audioUtils.playAudio(audio, type);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                 } else if (msg.what == ASR_MSG){
                     Bundle data = msg.getData();
@@ -246,10 +245,10 @@ public class MainActivity extends AppCompatActivity {
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
             String translation = binding.textTarget.getText().toString();
-            if (translation.isEmpty()) {
-                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
-                return;
-            }
+//            if (translation.isEmpty()) {
+//                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
+//                return;
+//            }
 
             readTranslation(translation);
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
@@ -463,29 +462,6 @@ public class MainActivity extends AppCompatActivity {
         text = responseJson.getString("translatedText");
 
         return text;
-    }
-
-    private void playAudio(String audio, String type) {
-        byte[] audioData = Base64.decode(audio, Base64.DEFAULT);
-        try {
-            File tempAudioFile = File.createTempFile("temp_audio", "." + type);
-
-            OutputStream os = new FileOutputStream(tempAudioFile);
-            os.write(audioData);
-            os.close();
-
-            MediaPlayer mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(tempAudioFile.getAbsolutePath());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-
-            mediaPlayer.setOnCompletionListener(mp -> {
-                mediaPlayer.release();
-                tempAudioFile.delete(); // Delete the temporary file
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }
