@@ -29,16 +29,4 @@
     <string name="save">保存</string>
     <string name="close">关闭</string>
 
-    <string name="select_image">从图库取图</string>
-    <string name="take_photo">拍照取图</string>
-    <string name="ocr_mode">识别语言</string>
-
-    <string-array name="ocr_type">
-        <item>Text Recognition Latin</item>
-        <item>Text Recognition Chinese (Beta)</item>
-        <item>Text Recognition Devanagari (Beta)</item>
-        <item>Text Recognition Japanese (Beta)</item>
-        <item>Text Recognition Korean (Beta)</item>
-    </string-array>
-
 </resources>
