@@ -1,19 +1,19 @@
 package com.yimt;
 
+import static com.yimt.ImageUtils.CODE_CROP_IMG;
+import static com.yimt.ImageUtils.CODE_SETHDIMG_ALNUM;
+import static com.yimt.ImageUtils.CODE_SETHDIMG_CAM;
 import static com.yimt.Utils.encodeAudioFileToBase64;
-import static com.yimt.Utils.encodeImageToBase64;
+import static com.yimt.Utils.encodeFileToBase64;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.Uri;
@@ -21,7 +21,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -35,7 +34,6 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityMainBinding;
-import com.yimt.ocr.BitmapUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,8 +56,6 @@ public class MainActivity extends AppCompatActivity {
     private static final int OCR_MSG = 204;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
-    final static int CONN_TIMEOUT = 15000;
-    final static int READ_TIMEOUT = 15000;
 
     private String[] languages = new String[]{"自动检测", "中文", "英文"};
 
@@ -73,6 +69,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_WRITE_STORAGE = 104;
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
+
+    private ImageUtils imageUtils = new ImageUtils();
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -198,32 +196,12 @@ public class MainActivity extends AppCompatActivity {
 
         // 相机按钮
         binding.Camera.setOnClickListener(view -> {
-            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.TITLE, "New Picture");
-                values.put(MediaStore.Images.Media.DESCRIPTION, "From Camera");
-                imageUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                Log.d("yimt", imageUri.toString());
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-            }
+            imageUtils.gotoCam(this);
         });
 
         // 相册按钮
         binding.Gallery.setOnClickListener(view -> {
-//            Intent pickIntent = new Intent(Intent.ACTION_PICK, null);
-//            pickIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "image/*");
-//            startActivityForResult(pickIntent, REQUEST_CHOOSE_IMAGE);
-
-//            Intent intent = new Intent();
-//            intent.setType("image/*");
-//            intent.setAction(Intent.ACTION_GET_CONTENT);
-//            startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CHOOSE_IMAGE);
-
-            Intent intent = new Intent(Intent.ACTION_PICK);
-            intent.setType("image/*");
-            startActivityForResult(intent, REQUEST_CHOOSE_IMAGE);
+            imageUtils.gotoAlbum(this);
         });
 
         // 删除按钮
@@ -280,104 +258,21 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CHOOSE_IMAGE && resultCode == RESULT_OK) {  // 成功从相册选择图片
-//            imageUri = data.getData();
-//            Toast.makeText(MainActivity.this, imageUri.toString(), Toast.LENGTH_LONG).show();
-//            crop(imageUri);
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == CODE_SETHDIMG_ALNUM) {//相册数据返回
+            imageUtils.cropImg(this, false, data, "image_hd");//裁剪
+        } else if (resultCode == RESULT_OK && requestCode == CODE_SETHDIMG_CAM) {//相机拍照返回
+            imageUtils.cropImg(this, true, null, "image_hd");//裁剪
+            //imageUtils.refreshAlbum(mContext, imageUtils.camImgFile.getPath());//刷新相册
+        } else if (resultCode == RESULT_OK && requestCode == CODE_CROP_IMG) {//裁剪图片返回
+            String imgFilePath = imageUtils.cropImgFile.getPath();
 
-//            Bitmap imageBitmap = null;
-//            imageUri = data.getData();
-//            try {
-//                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            crop(imageBitmap);
+            Toast.makeText(this, imgFilePath, Toast.LENGTH_LONG).show();
 
-//            Bitmap imageBitmap = null;
-//            imageUri = data.getData();
-//            try {
-//                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            crop(imageBitmap);
+            getTextForImage(imgFilePath);
 
-            Uri selectedImageUri = data.getData();
-
-            Log.d("yimt", "Select IMAGE " + selectedImageUri);
-
-            crop(selectedImageUri);
-        } else if (requestCode == REQUEST_CROP_IMAGE && resultCode == RESULT_OK) {  // 成功剪切图片
-            // Toast.makeText(MainActivity.this, "CROP Image Done", Toast.LENGTH_LONG).show();
-//            Uri croppedImageUri = data.getData();
-
-            Log.d("yimt", "Crop done.");
-
-            Bundle extra = data.getExtras();
-            Bitmap bitmap = extra.getParcelable("data");
-
-//            Log.d("yimt", "Cropped IMAGE " + croppedImageUri);
-//
-            getTextForImage(bitmap);
-            binding.Pending.setVisibility(View.VISIBLE);
-        } else if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {  // 成功拍照
-//            Toast.makeText(MainActivity.this, "CAPTURE DONE", Toast.LENGTH_LONG).show();
-//            crop(imageUri);
-//            Bitmap imageBitmap = null;
-//            try {
-//                imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            crop(imageBitmap);
-
-            Log.d("yimt", "Take IMAGE " + imageUri);
-
-            crop(imageUri);
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
+            binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
         }
-    }
-
-
-    private Bitmap decodeUriAsBitmap(Uri uri) {
-        Bitmap bitmap = null;
-        try {
-            bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return bitmap;
-    }
-
-    // 系统裁剪功能调用
-    private void crop(Bitmap bitmap) {
-        Intent intent = new Intent("com.android.camera.action.CROP");
-        Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1", "1"));
-        intent.setDataAndType(uri, "image/*"); //设置要缩放的图片Uri和类型
-        intent.putExtra("crop", "true");
-        intent.putExtra("scale", true); //缩放
-        intent.putExtra("return-data", false); //当为true的时候就返回缩略图，false就不返回，需要通过Uri
-        intent.putExtra("noFaceDetection", false); //前置摄像头
-        startActivityForResult(intent, REQUEST_CROP_IMAGE); //打开剪裁Activity
-    }
-
-    private void crop(Uri uri) {
-        Log.d("yimt", "crop " + uri);
-        Intent intent = new Intent("com.android.camera.action.CROP");
-        //Uri uri = Uri.parse(MediaStore.Images.Media.insertImage(MainActivity.this.getContentResolver(), bitmap, "1", "1"));
-        intent.setDataAndType(uri, "image/*"); //设置要缩放的图片Uri和类型
-        intent.putExtra("crop", "true");
-        intent.putExtra("scale", true); //缩放
-        intent.putExtra("return-data", true); //当为true的时候就返回缩略图，false就不返回，需要通过Uri
-        intent.putExtra("noFaceDetection", false); //前置摄像头
-
-//        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
-//        intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
-
-        startActivityForResult(intent, REQUEST_CROP_IMAGE); //打开剪裁Activity
     }
 
     private void translateText(String text) {
@@ -518,60 +413,18 @@ public class MainActivity extends AppCompatActivity {
         return responseJson.getString("translatedText");
     }
 
-//    private void getTextForImage(){
-//        if (imageUri == null)
-//            return;
-//
-//        Bitmap imageBitmap = null;
-//        try {
-//            imageBitmap = BitmapUtils.getBitmapFromContentUri(getContentResolver(), imageUri);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        if (imageBitmap == null)
-//            return;
-//
-//        String server = DEFAULT_SERVER;
-//
-//        Bitmap finalImageBitmap = imageBitmap;
-//        Thread thread = new Thread(() -> {
-//            String error = "";
-//            String text = "";
-//            try {
-//                if (server != null) {
-//                    text = requestTextForImage(server, "api_key", finalImageBitmap);
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                error = e.toString();
-//            }
-//
-//            Bundle bundle = new Bundle();
-//            bundle.putString("error", error);
-//            if(error.isEmpty())
-//                bundle.putString("ocr_text", text);
-//            Message msg = new Message();
-//            msg.setData(bundle);
-//            msg.what = OCR_MSG;
-//            mhandler.sendMessage(msg);
-//        });
-//
-//        thread.start();
-//    }
-
-    private void getTextForImage(Bitmap imageBitmap){
+    private void getTextForImage(String filePath){
         Log.d("yimt", "getTextForImage");
 
         String server = DEFAULT_SERVER;
 
-        Bitmap finalImageBitmap = imageBitmap;
+        String finalFilePath = filePath;
         Thread thread = new Thread(() -> {
             String error = "";
             String text = "";
             try {
                 if (server != null) {
-                    text = requestTextForImage(server, "api_key", finalImageBitmap);
+                    text = requestTextForImage(server, "api_key", finalFilePath);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -591,12 +444,13 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
-    private String requestTextForImage(String server, String apiKey, Bitmap imageBitmap) throws IOException, JSONException {
+    private String requestTextForImage(String server, String apiKey, String filePath) throws IOException, JSONException {
         String text = "";
         String url = server + "/translate_image2text";
 
         JSONObject json = new JSONObject();
-        String base64 = encodeImageToBase64(imageBitmap);
+        // String base64 = encodeImageToBase64(imageBitmap);
+        String base64 = encodeFileToBase64(filePath);
         String Source = "en";
         String Target = "zh";
         json.put("base64", base64);

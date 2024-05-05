@@ -101,6 +101,11 @@ public class Utils {
         return null;
     }
 
+    public static String encodeFileToBase64(String filePath) throws IOException {
+        byte[] audioData = readFileToByteArray(filePath);
+        return Base64.encodeToString(audioData, Base64.DEFAULT);
+    }
+
     public static String encodeAudioFileToBase64(String filePath) throws IOException {
         byte[] audioData = readFileToByteArray(filePath);
         return Base64.encodeToString(audioData, Base64.DEFAULT);
