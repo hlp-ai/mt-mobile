@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (msg.what == READ_TEXT_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
                     if (serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     else{
@@ -251,6 +252,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             readTranslation(translation);
+            binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
         });
     }
 
