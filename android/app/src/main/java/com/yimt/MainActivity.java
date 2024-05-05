@@ -9,10 +9,12 @@ import static com.yimt.Utils.encodeFileToBase64;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,6 +25,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,6 +43,8 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity {
 
     private ActivityMainBinding binding;
+
+    private SharedPreferences settings;
 
     private Handler mhandler;
     private static final int TRANSLATE_MSG = 201;
@@ -68,6 +74,8 @@ public class MainActivity extends AppCompatActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        settings = getSharedPreferences("com.yimt", 0);
 
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
@@ -150,6 +158,29 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.CAMERA},
                     REQUEST_CAMERA_PERMISSION);
+
+        // 设置按钮
+        binding.Settings.setOnClickListener(view -> {
+            View about = getLayoutInflater().inflate(R.layout.about, null);
+            EditText serverET = about.findViewById(R.id.Server);
+            EditText apiET = about.findViewById(R.id.Api);
+            final String[] server = {settings.getString("server", DEFAULT_SERVER)};
+            String apiKey = settings.getString("apiKey", "");
+            serverET.setText(server[0]);
+            apiET.setText(apiKey);
+            AlertDialog.Builder popUp = new AlertDialog.Builder(this, R.style.AlertDialog);
+            popUp.setView(about)
+                    .setTitle(getString(R.string.settingTitle))
+                    .setPositiveButton(getString(R.string.save), (dialogInterface, i) -> {
+                        server[0] = serverET.getText().toString();
+                        settings.edit()
+                                .putString("server", server[0])
+                                .putString("apiKey", apiET.getText().toString())
+                                .apply();
+                    })
+                    .setNegativeButton(getString(R.string.close), null)
+                    .show();
+        });
 
         // 翻译按钮
         binding.StartTranslation.setOnClickListener(view -> {
