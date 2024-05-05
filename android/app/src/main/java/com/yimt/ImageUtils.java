@@ -8,12 +8,10 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.WindowManager;
 
 import java.io.ByteArrayOutputStream;
@@ -24,8 +22,8 @@ import java.util.Date;
 import java.util.Locale;
 
 public class ImageUtils {
-    public static final int CODE_SETHDIMG_ALNUM = 572;
-    public static final int CODE_SETHDIMG_CAM = 231;
+    public static final int CODE_SETIMG_ALNUM = 572;
+    public static final int CODE_SETIMG_CAM = 231;
     public static final int CODE_CROP_IMG = 318;
 
 
@@ -64,14 +62,14 @@ public class ImageUtils {
         //跳转到照相机拍照
         Intent it = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         it.putExtra(MediaStore.EXTRA_OUTPUT, outputImgUriFromCam);
-        context.startActivityForResult(it, CODE_SETHDIMG_CAM);
+        context.startActivityForResult(it, CODE_SETIMG_CAM);
     }
 
     public void gotoAlbum(Activity context) {
         Intent it = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        (context).startActivityForResult(it, CODE_SETHDIMG_ALNUM);
+        (context).startActivityForResult(it, CODE_SETIMG_ALNUM);
     }
 
     /**

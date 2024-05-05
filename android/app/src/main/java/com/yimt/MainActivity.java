@@ -1,8 +1,8 @@
 package com.yimt;
 
 import static com.yimt.ImageUtils.CODE_CROP_IMG;
-import static com.yimt.ImageUtils.CODE_SETHDIMG_ALNUM;
-import static com.yimt.ImageUtils.CODE_SETHDIMG_CAM;
+import static com.yimt.ImageUtils.CODE_SETIMG_ALNUM;
+import static com.yimt.ImageUtils.CODE_SETIMG_CAM;
 import static com.yimt.Utils.encodeAudioFileToBase64;
 import static com.yimt.Utils.encodeFileToBase64;
 
@@ -15,8 +15,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
-import android.media.MediaRecorder;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -39,7 +37,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -59,10 +56,6 @@ public class MainActivity extends AppCompatActivity {
 
     private String[] languages = new String[]{"自动检测", "中文", "英文"};
 
-    private MediaRecorder mediaRecorder = null;
-    private String audioFile = null;  // 录音文件
-    private Uri imageUri = null;
-
     private static final int REQUEST_CHOOSE_IMAGE = 101;
     private static final int REQUEST_CROP_IMAGE = 102;
     private static final int REQUEST_IMAGE_CAPTURE = 103;
@@ -71,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA_PERMISSION = 200;
 
     private ImageUtils imageUtils = new ImageUtils();
+
+    private AudioUtils audioUtils = new AudioUtils();
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -170,7 +165,8 @@ public class MainActivity extends AppCompatActivity {
         binding.MicroPhone.setOnLongClickListener(v -> {
             // Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
             try {
-                startRecording();
+                // startRecording();
+                audioUtils.startRecording(this);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -181,10 +177,12 @@ public class MainActivity extends AppCompatActivity {
         // 话筒按钮: 松开结束
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
             if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                stopRecording();
+                // stopRecording();
+                audioUtils.stopRecording();
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
 
-                getTextForAudio(audioFile);
+                // getTextForAudio(audioFile);
+                getTextForAudio(audioUtils.audioFile);
 
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
@@ -259,9 +257,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == CODE_SETHDIMG_ALNUM) {//相册数据返回
+        if (resultCode == RESULT_OK && requestCode == CODE_SETIMG_ALNUM) {//相册数据返回
             imageUtils.cropImg(this, false, data, "image_hd");//裁剪
-        } else if (resultCode == RESULT_OK && requestCode == CODE_SETHDIMG_CAM) {//相机拍照返回
+        } else if (resultCode == RESULT_OK && requestCode == CODE_SETIMG_CAM) {//相机拍照返回
             imageUtils.cropImg(this, true, null, "image_hd");//裁剪
             //imageUtils.refreshAlbum(mContext, imageUtils.camImgFile.getPath());//刷新相册
         } else if (resultCode == RESULT_OK && requestCode == CODE_CROP_IMG) {//裁剪图片返回
@@ -394,15 +392,14 @@ public class MainActivity extends AppCompatActivity {
 
     private String requestAudioToText(String server, String audioFilePath) throws IOException, JSONException {
         String audioBase64 = encodeAudioFileToBase64(audioFilePath);
-
-        // 创建一个 JSON 对象，包含音频数据和其他参数
         JSONObject json = new JSONObject();
         json.put("base64", audioBase64);
         json.put("format", "wav");
         json.put("rate", 8000);
         json.put("channel", 1);
         json.put("token", "api_key");
-        json.put("len", audioFile.length());
+        // json.put("len", audioFile.length());
+        json.put("len", audioUtils.audioFile.length());
         json.put("source", "en");
         json.put("target", "zh");
 
@@ -487,37 +484,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    //开始录音
-    private String startRecording() throws IOException {
-        File dir = new File(getExternalFilesDir(null), "audio");
-        if (!dir.exists())
-            dir.mkdirs();
-
-        File soundFile = new File(dir, System.currentTimeMillis() + ".amr");
-        if (!soundFile.exists())
-            soundFile.createNewFile();
-
-        mediaRecorder = new MediaRecorder();
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-        audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
-        mediaRecorder.setOutputFile(audioFile);
-
-        mediaRecorder.prepare();
-        mediaRecorder.start();
-
-        return audioFile;
-    }
-
-    // 停止录音
-    private void stopRecording() {
-        mediaRecorder.stop();
-        mediaRecorder.reset();
-        mediaRecorder.release();
-        mediaRecorder = null;
     }
 
 }
