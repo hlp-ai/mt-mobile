@@ -5,6 +5,7 @@ import static com.yimt.ImageUtils.CODE_SETIMG_ALNUM;
 import static com.yimt.ImageUtils.CODE_SETIMG_CAM;
 import static com.yimt.Utils.encodeAudioFileToBase64;
 import static com.yimt.Utils.encodeFileToBase64;
+import static com.yimt.Utils.lang2code;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -225,11 +226,23 @@ public class MainActivity extends AppCompatActivity {
 
         // 相机按钮
         binding.Camera.setOnClickListener(view -> {
+            String sourceLang = getSourceLang();
+            if(sourceLang.equals("auto")){
+                Toast.makeText(MainActivity.this, "请选择源语言", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             imageUtils.gotoCam(this);
         });
 
         // 相册按钮
         binding.Gallery.setOnClickListener(view -> {
+            String sourceLang = getSourceLang();
+            if(sourceLang.equals("auto")){
+                Toast.makeText(MainActivity.this, "请选择源语言", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             imageUtils.gotoAlbum(this);
         });
 
@@ -299,7 +312,8 @@ public class MainActivity extends AppCompatActivity {
 
             Toast.makeText(this, imgFilePath, Toast.LENGTH_LONG).show();
 
-            getTextForImage(imgFilePath);
+            String sourceLang = getSourceLang();
+            getTextForImage(imgFilePath, sourceLang);
 
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
         }
@@ -442,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
         return responseJson.getString("text");
     }
 
-    private void getTextForImage(String filePath){
+    private void getTextForImage(String filePath, String sourceLang){
         Log.d("yimt", "getTextForImage");
 
         String server = DEFAULT_SERVER;
@@ -453,7 +467,7 @@ public class MainActivity extends AppCompatActivity {
             String text = "";
             try {
                 if (server != null) {
-                    text = requestTextForImage(server, "api_key", finalFilePath);
+                    text = requestTextForImage(server, "api_key", sourceLang, finalFilePath);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -473,7 +487,7 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
-    private String requestTextForImage(String server, String apiKey, String filePath) throws IOException, JSONException {
+    private String requestTextForImage(String server, String apiKey, String sourceLang, String filePath) throws IOException, JSONException {
         String url = server + "/ocr";
 
         JSONObject json = new JSONObject();
@@ -483,7 +497,7 @@ public class MainActivity extends AppCompatActivity {
         json.put("base64", base64);
 //        json.put("source", Source);
 //        json.put("target", Target);
-        json.put("lang", "zh");
+        json.put("lang", sourceLang);
         if (!apiKey.equals(""))
             json.put("token", apiKey);
 
@@ -492,6 +506,12 @@ public class MainActivity extends AppCompatActivity {
         String text = responseJson.getString("text");
 
         return text;
+    }
+
+    private String getSourceLang(){
+        String source = binding.spinnerSrcLang.getSelectedItem().toString();
+
+        return lang2code(source);
     }
 
 }
