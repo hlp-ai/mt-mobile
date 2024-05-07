@@ -123,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
                     if (serverError.length() > 0)
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     else{
-                        String text = (String) data.get("ocr_text");
+                        String text = (String) data.get("text");
                         binding.textSource.setText(text);
                     }
                 }
@@ -463,7 +463,7 @@ public class MainActivity extends AppCompatActivity {
             Bundle bundle = new Bundle();
             bundle.putString("error", error);
             if(error.isEmpty())
-                bundle.putString("ocr_text", text);
+                bundle.putString("text", text);
             Message msg = new Message();
             msg.setData(bundle);
             msg.what = OCR_MSG;
@@ -474,23 +474,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String requestTextForImage(String server, String apiKey, String filePath) throws IOException, JSONException {
-        String text = "";
-        String url = server + "/translate_image2text";
+        String url = server + "/ocr";
 
         JSONObject json = new JSONObject();
-        // String base64 = encodeImageToBase64(imageBitmap);
         String base64 = encodeFileToBase64(filePath);
-        String Source = "en";
-        String Target = "zh";
+//        String Source = "en";
+//        String Target = "zh";
         json.put("base64", base64);
-        json.put("source", Source);
-        json.put("target", Target);
+//        json.put("source", Source);
+//        json.put("target", Target);
+        json.put("lang", "zh");
         if (!apiKey.equals(""))
             json.put("token", apiKey);
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
-        text = responseJson.getString("text");
+        String text = responseJson.getString("text");
 
         return text;
     }
