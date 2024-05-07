@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
                         try {
                             audioUtils.playAudio(audio, type);
                         } catch (IOException e) {
+                            Toast.makeText(MainActivity.this, "声音播放失败", Toast.LENGTH_LONG).show();
                             e.printStackTrace();
                         }
                     }
@@ -288,13 +289,16 @@ public class MainActivity extends AppCompatActivity {
 
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
-            String translation = binding.textTarget.getText().toString();
+            // String translation = binding.textTarget.getText().toString();
 //            if (translation.isEmpty()) {
 //                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
 //                return;
 //            }
 
-            readTranslation(translation);
+            // 测试目的
+            String text = binding.textSource.getText().toString();
+
+            readTranslation(text);
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
         });
     }
@@ -396,14 +400,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private JSONObject requestTTS(String server, String apiKey, String text) throws Exception {
-        String url = server + "/translate_text2audio";
+        String url = server + "/tts";
 
         JSONObject json = new JSONObject();
         if (!apiKey.equals(""))
             json.put("api_key", apiKey);
         json.put("text", text);
         json.put("token", "123");
-        json.put("lang", "zho");
+        json.put("lang", "eng");
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
