@@ -440,16 +440,17 @@ public class MainActivity extends AppCompatActivity {
         String audioBase64 = encodeAudioFileToBase64(audioFilePath);
         JSONObject json = new JSONObject();
         json.put("base64", audioBase64);
-        json.put("format", "wav");
+        json.put("format", "amr");
         json.put("rate", 8000);
         json.put("channel", 1);
         json.put("token", "api_key");
         // json.put("len", audioFile.length());
         json.put("len", audioUtils.audioFile.length());
-        json.put("source", "en");
-        json.put("target", "zh");
+//        json.put("source", "en");
+//        json.put("target", "zh");
+        json.put("lang", "zh");
 
-        String url = server + "/translate_audio2text";
+        String url = server + "/asr";
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
