@@ -166,17 +166,16 @@ public class MainActivity extends AppCompatActivity {
             View about = getLayoutInflater().inflate(R.layout.about, null);
             EditText serverET = about.findViewById(R.id.Server);
             EditText apiET = about.findViewById(R.id.Api);
-            final String[] server = {settings.getString("server", DEFAULT_SERVER)};
+            String server = settings.getString("server", DEFAULT_SERVER);
             String apiKey = settings.getString("apiKey", "");
-            serverET.setText(server[0]);
+            serverET.setText(server);
             apiET.setText(apiKey);
             AlertDialog.Builder popUp = new AlertDialog.Builder(this, R.style.AlertDialog);
             popUp.setView(about)
                     .setTitle(getString(R.string.settingTitle))
                     .setPositiveButton(getString(R.string.save), (dialogInterface, i) -> {
-                        server[0] = serverET.getText().toString();
                         settings.edit()
-                                .putString("server", server[0])
+                                .putString("server", serverET.getText().toString())
                                 .putString("apiKey", apiET.getText().toString())
                                 .apply();
                     })
@@ -324,8 +323,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void translateText(String text) {
-        String server = DEFAULT_SERVER;
-        String apiKey = "";
+        String server = settings.getString("server", DEFAULT_SERVER);
+        String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
             String translation = "";
@@ -369,7 +368,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void readTranslation(String text) {
-        String server = DEFAULT_SERVER;
+        String server = settings.getString("server", DEFAULT_SERVER);
+        String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
             String error = "";
@@ -415,7 +415,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void getTextForAudio(String filePath){
-        String server = DEFAULT_SERVER;
+        String server = settings.getString("server", DEFAULT_SERVER);
+        String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
             String error = "";
@@ -464,7 +465,8 @@ public class MainActivity extends AppCompatActivity {
     private void getTextForImage(String filePath, String sourceLang){
         Log.d("yimt", "getTextForImage");
 
-        String server = DEFAULT_SERVER;
+        String server = settings.getString("server", DEFAULT_SERVER);
+        String apiKey = settings.getString("apiKey", "");
 
         String finalFilePath = filePath;
         Thread thread = new Thread(() -> {
