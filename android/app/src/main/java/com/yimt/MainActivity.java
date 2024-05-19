@@ -364,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
-        return responseJson.getString("translatedText");
+        return responseJson.getString("translation");
     }
 
     private void readTranslation(String text) {
