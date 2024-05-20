@@ -27,7 +27,6 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
-    private String[] languages = new String[]{"自动检测", "中文", "英文"};
+    private final String[] languages = new String[]{"自动检测", "中文", "英文"};
 
     private static final int REQUEST_CHOOSE_IMAGE = 101;
     private static final int REQUEST_CROP_IMAGE = 102;
@@ -186,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         // 翻译按钮
         binding.StartTranslation.setOnClickListener(view -> {
             String text = binding.textSource.getText().toString();
-            if (!text.equals("")) {
+            if (!text.isEmpty()) {
                 translateText(text);
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
             }
@@ -264,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
         // 分享按钮
         binding.Share.setOnClickListener(view -> {
             String translation = binding.textTarget.getText().toString();
-            if (translation.length() > 0) {
+            if (!translation.isEmpty()) {
                 Intent shareIntent = new Intent(Intent.ACTION_SEND);
                 shareIntent.setType("text/plain");
                 shareIntent.putExtra(Intent.EXTRA_TEXT, translation);
@@ -288,14 +287,11 @@ public class MainActivity extends AppCompatActivity {
 
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
-            // String translation = binding.textTarget.getText().toString();
-//            if (translation.isEmpty()) {
-//                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
-//                return;
-//            }
-
-            // 测试目的
-            String text = binding.textSource.getText().toString();
+            String text = binding.textTarget.getText().toString();
+            if (text.isEmpty()) {
+                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
+                return;
+            }
 
             readTranslation(text);
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
@@ -356,8 +352,8 @@ public class MainActivity extends AppCompatActivity {
         if (!apiKey.equals(""))
             json.put("api_key", apiKey);
         String q = text.replace("&", "%26");
-        String source = "en"; // binding.spinnerSrcLang.getSelectedItem().toString();
-        String target = "zh";  // binding.spinnerTgtLang.getSelectedItem().toString();
+        String source = Utils.lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
+        String target = Utils.lang2code(binding.spinnerTgtLang.getSelectedItem().toString());
         json.put("q", q);
         json.put("source", source);
         json.put("target", target);
@@ -375,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
             String error = "";
             JSONObject audioMsg = new JSONObject();
             try {
-                audioMsg = requestTTS(server, "", text);
+                audioMsg = requestTTS(server, apiKey, text);
             } catch (Exception e) {
                 e.printStackTrace();
                 error = e.toString();
@@ -403,11 +399,12 @@ public class MainActivity extends AppCompatActivity {
         String url = server + "/tts";
 
         JSONObject json = new JSONObject();
-        if (!apiKey.equals(""))
+        if (!apiKey.isEmpty())
             json.put("api_key", apiKey);
         json.put("text", text);
         json.put("token", "123");
-        json.put("lang", "eng");
+        String lang = Utils.lang2code(binding.spinnerTgtLang.getSelectedItem().toString());
+        json.put("lang", lang);
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
@@ -453,7 +450,8 @@ public class MainActivity extends AppCompatActivity {
         json.put("len", audioUtils.audioFile.length());
 //        json.put("source", "en");
 //        json.put("target", "zh");
-        json.put("lang", "zh");
+        String lang = Utils.lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
+        json.put("lang", lang);
 
         String url = server + "/asr";
 
@@ -474,7 +472,7 @@ public class MainActivity extends AppCompatActivity {
             String text = "";
             try {
                 if (server != null) {
-                    text = requestTextForImage(server, "api_key", sourceLang, finalFilePath);
+                    text = requestTextForImage(server, apiKey, sourceLang, finalFilePath);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -505,7 +503,7 @@ public class MainActivity extends AppCompatActivity {
 //        json.put("source", Source);
 //        json.put("target", Target);
         json.put("lang", sourceLang);
-        if (!apiKey.equals(""))
+        if (!apiKey.isEmpty())
             json.put("token", apiKey);
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
@@ -516,9 +514,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getSourceLang(){
-        String source = binding.spinnerSrcLang.getSelectedItem().toString();
+        String sl = binding.spinnerSrcLang.getSelectedItem().toString();
 
-        return lang2code(source);
+        return lang2code(sl);
+    }
+
+    private String getTargetLang(){
+        String tl = binding.spinnerTgtLang.getSelectedItem().toString();
+
+        return lang2code(tl);
     }
 
 }
