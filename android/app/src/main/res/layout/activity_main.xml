@@ -35,6 +35,8 @@
             android:hint="这里输入..."
             android:inputType="textMultiLine"
             android:padding="8dp"
+            android:textColor="#FF9800"
+            android:textSize="22sp"
             android:background="@null" />
     </LinearLayout>
 
@@ -109,6 +111,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
+                android:textSize="22sp"
+                android:textColor="#2196F3"
                 android:textIsSelectable="true" />
 
         </ScrollView>
