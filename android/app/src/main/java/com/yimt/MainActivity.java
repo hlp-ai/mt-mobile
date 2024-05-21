@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
-    private final String[] languages = new String[]{"自动检测", "中文", "英文"};
+    private final String[] languages = new String[]{"自动检测", "中文", "英文", "日文", "阿拉伯文"};
 
     private static final int REQUEST_CHOOSE_IMAGE = 101;
     private static final int REQUEST_CROP_IMAGE = 102;

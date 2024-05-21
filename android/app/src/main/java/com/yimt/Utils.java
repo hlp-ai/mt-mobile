@@ -97,6 +97,10 @@ public class Utils {
             return "zh";
         if(lang.equals("英文"))
             return "en";
+        if(lang.equals("日文"))
+            return "ja";
+        if(lang.equals("阿拉伯文"))
+            return "ar";
 
         return null;
     }
