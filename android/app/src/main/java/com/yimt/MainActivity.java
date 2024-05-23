@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     binding.textTarget.setText(translation);
                     binding.Pending.setVisibility(View.GONE);  // 停止显示进度条
+                    binding.StartTranslation.setEnabled(true);
                 } else if (msg.what == READ_TEXT_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
@@ -184,11 +185,14 @@ public class MainActivity extends AppCompatActivity {
 
         // 翻译按钮
         binding.StartTranslation.setOnClickListener(view -> {
-            String text = binding.textSource.getText().toString();
+            String text = binding.textSource.getText().toString().trim();
             if (!text.isEmpty()) {
                 translateText(text);
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+                binding.StartTranslation.setEnabled(false);
             }
+            else
+                Toast.makeText(MainActivity.this, "输入文本为空", Toast.LENGTH_SHORT).show();
 
         });
 
