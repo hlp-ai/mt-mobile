@@ -112,6 +112,12 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                     }
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
                 } else if (msg.what == ASR_MSG){
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
@@ -309,6 +315,12 @@ public class MainActivity extends AppCompatActivity {
 
             readTranslation(text);
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+
+            binding.StartTranslation.setEnabled(false);
+            binding.Camera.setEnabled(false);
+            binding.Gallery.setEnabled(false);
+            binding.ReadTranslation.setEnabled(false);
+            binding.MicroPhone.setEnabled(false);
         });
     }
 
