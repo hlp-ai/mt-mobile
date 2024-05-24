@@ -89,7 +89,12 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
                     binding.textTarget.setText(translation);
                     binding.Pending.setVisibility(View.GONE);  // 停止显示进度条
+
                     binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
                 } else if (msg.what == READ_TEXT_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
@@ -189,7 +194,12 @@ public class MainActivity extends AppCompatActivity {
             if (!text.isEmpty()) {
                 translateText(text);
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+
                 binding.StartTranslation.setEnabled(false);
+                binding.Camera.setEnabled(false);
+                binding.Gallery.setEnabled(false);
+                binding.ReadTranslation.setEnabled(false);
+                binding.MicroPhone.setEnabled(false);
             }
             else
                 Toast.makeText(MainActivity.this, "输入文本为空", Toast.LENGTH_SHORT).show();
