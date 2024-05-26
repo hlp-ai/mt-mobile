@@ -129,6 +129,12 @@ public class MainActivity extends AppCompatActivity {
                         binding.textSource.setText((text));
                     }
 
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+
                 } else if (msg.what == OCR_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
@@ -139,6 +145,12 @@ public class MainActivity extends AppCompatActivity {
                         String text = (String) data.get("text");
                         binding.textSource.setText(text);
                     }
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
                 }
             }
         };
@@ -236,6 +248,12 @@ public class MainActivity extends AppCompatActivity {
                 getTextForAudio(audioUtils.audioFile);
 
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+
+                binding.StartTranslation.setEnabled(false);
+                binding.Camera.setEnabled(false);
+                binding.Gallery.setEnabled(false);
+                binding.ReadTranslation.setEnabled(false);
+                binding.MicroPhone.setEnabled(false);
 
                 return true;
             }
@@ -341,6 +359,12 @@ public class MainActivity extends AppCompatActivity {
             getTextForImage(imgFilePath, sourceLang);
 
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+
+            binding.StartTranslation.setEnabled(false);
+            binding.Camera.setEnabled(false);
+            binding.Gallery.setEnabled(false);
+            binding.ReadTranslation.setEnabled(false);
+            binding.MicroPhone.setEnabled(false);
         }
     }
 
