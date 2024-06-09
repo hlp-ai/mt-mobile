@@ -35,6 +35,7 @@ import androidx.core.app.ActivityCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityMainBinding;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int READ_TEXT_MSG = 202;
     private static final int ASR_MSG = 203;
     private static final int OCR_MSG = 204;
+    private static final int LANGUAGES_MSG = 205;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
@@ -561,6 +563,54 @@ public class MainActivity extends AppCompatActivity {
         String text = responseJson.getString("text");
 
         return text;
+    }
+
+    private void getLanguages(){
+        Log.d("yimt", "getLanguages");
+
+        String server = settings.getString("server", DEFAULT_SERVER);
+        String apiKey = settings.getString("apiKey", "");
+
+        Thread thread = new Thread(() -> {
+            String error = "";
+            String languages = "";
+            try {
+                if (server != null) {
+                    languages = requestLanguages(server);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                error = e.toString();
+            }
+
+            Bundle bundle = new Bundle();
+            bundle.putString("error", error);
+            if(error.isEmpty())
+                bundle.putString("languages", languages);
+            Message msg = new Message();
+            msg.setData(bundle);
+            msg.what = LANGUAGES_MSG;
+            mhandler.sendMessage(msg);
+        });
+
+        thread.start();
+    }
+
+    private String requestLanguages(String server) throws IOException, JSONException {
+        String url = server + "/languages";
+
+        JSONArray jsonArray = new JSONArray(Utils.requestService(url, null, "GET"));
+
+        String languages = "";
+        for (int i = 0; i < jsonArray.length(); i++) {
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+            languages += jsonObject.getString("code") + "=" + jsonObject.getString("cname");
+
+            if(i < jsonArray.length() - 1)
+                languages += ",";
+        }
+
+        return languages;
     }
 
     private String getSourceLang(){

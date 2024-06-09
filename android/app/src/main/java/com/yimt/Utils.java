@@ -57,7 +57,7 @@ public class Utils {
     }
 
     // 服务请求
-    public static JSONObject requestService(String urlString, String data) throws IOException, JSONException {
+    public static String requestService(String urlString, String data, String method) throws IOException, JSONException {
         int CONN_TIMEOUT = 15000;
         int READ_TIMEOUT = 15000;
 
@@ -65,15 +65,19 @@ public class Utils {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(CONN_TIMEOUT);
         conn.setReadTimeout(READ_TIMEOUT);
-        conn.setRequestMethod("POST");
-        conn.setRequestProperty("Content-Type", "application/json");
-        conn.setDoOutput(true);
+        conn.setRequestMethod(method);
         conn.setDoInput(true);
 
-        // 发送请求数据
-        OutputStream os = conn.getOutputStream();
-        os.write(data.getBytes(StandardCharsets.UTF_8));
-        os.close();
+        if(data != null) {
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+//            conn.setDoInput(true);
+
+            // 发送请求数据
+            OutputStream os = conn.getOutputStream();
+            os.write(data.getBytes(StandardCharsets.UTF_8));
+            os.close();
+        }
 
         // 获取并处理响应数据
         InputStream is = conn.getInputStream();
@@ -87,7 +91,11 @@ public class Utils {
         is.close();
         conn.disconnect();
 
-        return new JSONObject(response.toString());
+        return response.toString();
+    }
+
+    public static JSONObject requestService(String urlString, String data) throws IOException, JSONException {
+        return new JSONObject(requestService(urlString, data, "POST"));
     }
 
     public static String lang2code(String lang) {
