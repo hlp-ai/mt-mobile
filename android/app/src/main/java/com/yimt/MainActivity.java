@@ -5,7 +5,8 @@ import static com.yimt.ImageUtils.CODE_SETIMG_ALNUM;
 import static com.yimt.ImageUtils.CODE_SETIMG_CAM;
 import static com.yimt.Utils.encodeAudioFileToBase64;
 import static com.yimt.Utils.encodeFileToBase64;
-import static com.yimt.Utils.lang2code;
+// import static com.yimt.Utils.lang2code;
+import static com.yimt.Utils.parseLanguages;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -39,6 +40,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -56,12 +59,8 @@ public class MainActivity extends AppCompatActivity {
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
-    private final String[] languages = new String[]{"自动检测", "中文", "英文", "日文", "阿拉伯文"};
-
-    private static final int REQUEST_CHOOSE_IMAGE = 101;
-    private static final int REQUEST_CROP_IMAGE = 102;
-    private static final int REQUEST_IMAGE_CAPTURE = 103;
-    private static final int REQUEST_WRITE_STORAGE = 104;
+    // private final String[] languages = new String[]{"自动检测", "中文", "英文", "日文", "阿拉伯文"};
+    private HashMap<String, String> langcode2Name = new HashMap<>();
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
 
@@ -78,6 +77,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         settings = getSharedPreferences("com.yimt", 0);
+
+        String langSettings = settings.getString("languages", "");
+        if(langSettings.isEmpty())
+            getLanguages();
+        else
+            setLanguages(langSettings);
 
         mhandler = new Handler(Looper.getMainLooper()) {
             public void handleMessage(Message msg) {
@@ -153,20 +158,21 @@ public class MainActivity extends AppCompatActivity {
                     binding.Gallery.setEnabled(true);
                     binding.ReadTranslation.setEnabled(true);
                     binding.MicroPhone.setEnabled(true);
+                }  else if (msg.what == LANGUAGES_MSG) {
+                    Bundle data = msg.getData();
+                    String serverError = data.getString("error");
+                    if (serverError.length() > 0)
+                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
+                    else{
+                        String languages = data.getString("languages");
+                        settings.edit().putString("languages",languages).apply();
+
+                        setLanguages(languages);
+                    }
                 }
             }
         };
 
-        // 添加下拉语言列表
-        ArrayAdapter<String> srcLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, languages);
-        srcLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.spinnerSrcLang.setAdapter(srcLangAdapter);
-
-        // 添加下拉语言列表
-        ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, languages);
-        tgtLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
-        binding.spinnerTgtLang.setSelection(1);
 
         // 申请录音权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
@@ -404,8 +410,8 @@ public class MainActivity extends AppCompatActivity {
         if (!apiKey.equals(""))
             json.put("api_key", apiKey);
         String q = text.replace("&", "%26");
-        String source = Utils.lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
-        String target = Utils.lang2code(binding.spinnerTgtLang.getSelectedItem().toString());
+        String source = lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
+        String target = lang2code(binding.spinnerTgtLang.getSelectedItem().toString());
         json.put("q", q);
         json.put("source", source);
         json.put("target", target);
@@ -455,7 +461,7 @@ public class MainActivity extends AppCompatActivity {
             json.put("api_key", apiKey);
         json.put("text", text);
         json.put("token", "123");
-        String lang = Utils.lang2code(binding.spinnerTgtLang.getSelectedItem().toString());
+        String lang = lang2code(binding.spinnerTgtLang.getSelectedItem().toString());
         json.put("lang", lang);
 
         JSONObject responseJson = Utils.requestService(url, json.toString());
@@ -502,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
         json.put("len", audioUtils.audioFile.length());
 //        json.put("source", "en");
 //        json.put("target", "zh");
-        String lang = Utils.lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
+        String lang = lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
         json.put("lang", lang);
 
         String url = server + "/asr";
@@ -623,6 +629,31 @@ public class MainActivity extends AppCompatActivity {
         String tl = binding.spinnerTgtLang.getSelectedItem().toString();
 
         return lang2code(tl);
+    }
+
+    private void setLanguages(String langSettings){
+        langcode2Name = parseLanguages(langSettings);
+        String[] langNames = langcode2Name.values().toArray(new String[0]);
+
+        // 添加下拉语言列表
+        ArrayAdapter<String> srcLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, langNames);
+        srcLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.spinnerSrcLang.setAdapter(srcLangAdapter);
+
+        // 添加下拉语言列表
+        ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, langNames);
+        tgtLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
+        binding.spinnerTgtLang.setSelection(1);
+    }
+
+    private String lang2code(String lang) {
+        for (Map.Entry<String, String> e : langcode2Name.entrySet()) {
+            if(e.getValue().equals(lang))
+                return e.getKey();
+        }
+
+        return null;
     }
 
 }

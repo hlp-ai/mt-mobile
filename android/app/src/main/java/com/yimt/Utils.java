@@ -20,6 +20,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 
 public class Utils {
 
@@ -98,19 +99,32 @@ public class Utils {
         return new JSONObject(requestService(urlString, data, "POST"));
     }
 
-    public static String lang2code(String lang) {
-        if(lang.equals("自动检测"))
-            return "auto";
-        if(lang.equals("中文"))
-            return "zh";
-        if(lang.equals("英文"))
-            return "en";
-        if(lang.equals("日文"))
-            return "ja";
-        if(lang.equals("阿拉伯文"))
-            return "ar";
+//    public static String lang2code(String lang) {
+//        if(lang.equals("自动检测"))
+//            return "auto";
+//        if(lang.equals("中文"))
+//            return "zh";
+//        if(lang.equals("英文"))
+//            return "en";
+//        if(lang.equals("日文"))
+//            return "ja";
+//        if(lang.equals("阿拉伯文"))
+//            return "ar";
+//
+//        return null;
+//    }
 
-        return null;
+    public static HashMap<String, String> parseLanguages(String languages){
+        String[] parts = languages.split(",");
+
+        HashMap<String, String> result = new HashMap<String, String>();
+        result.put("auto", "自动检测");
+        for(int i=0; i<parts.length; i++){
+            String[] p = parts[i].split("=");
+            result.put(p[0], p[1]);
+        }
+
+        return result;
     }
 
     public static String encodeFileToBase64(String filePath) throws IOException {
