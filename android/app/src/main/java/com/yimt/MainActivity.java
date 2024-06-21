@@ -151,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
                     else{
                         String text = (String) data.get("text");
                         binding.textSource.setText(text);
+                        binding.textTarget.setText("");
                     }
 
                     binding.StartTranslation.setEnabled(true);
@@ -361,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (resultCode == RESULT_OK && requestCode == CODE_CROP_IMG) {//裁剪图片返回
             String imgFilePath = imageUtils.cropImgFile.getPath();
 
-            Toast.makeText(this, imgFilePath, Toast.LENGTH_LONG).show();
+            // Toast.makeText(this, imgFilePath, Toast.LENGTH_LONG).show();
 
             String sourceLang = getSourceLang();
             getTextForImage(imgFilePath, sourceLang);
