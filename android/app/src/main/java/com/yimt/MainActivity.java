@@ -134,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
                     else{
                         String text = (String) data.get("audioToText");
                         binding.textSource.setText((text));
+                        binding.textTarget.setText("");
                     }
 
                     binding.StartTranslation.setEnabled(true);
