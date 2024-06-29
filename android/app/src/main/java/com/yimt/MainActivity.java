@@ -305,6 +305,9 @@ public class MainActivity extends AppCompatActivity {
                     imm.hideSoftInputFromWindow(view1.getWindowToken(), 0);
                 }
             }
+            else {
+                Toast.makeText(this, "输入内容为空", Toast.LENGTH_SHORT).show();
+            }
 
         });
 
@@ -316,6 +319,9 @@ public class MainActivity extends AppCompatActivity {
                 shareIntent.setType("text/plain");
                 shareIntent.putExtra(Intent.EXTRA_TEXT, translation);
                 startActivity(Intent.createChooser(shareIntent, "分享翻译"));
+            }
+            else {
+                Toast.makeText(this, "翻译内容为空", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -331,13 +337,16 @@ public class MainActivity extends AppCompatActivity {
                         Snackbar.LENGTH_LONG
                 ).show();
             }
+            else {
+                Toast.makeText(this, "翻译内容为空", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
             String text = binding.textTarget.getText().toString();
             if (text.isEmpty()) {
-                Toast.makeText(this, "没有可播放的文本", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "翻译内容为空", Toast.LENGTH_SHORT).show();
                 return;
             }
 
