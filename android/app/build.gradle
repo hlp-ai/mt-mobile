@@ -69,4 +69,8 @@ dependencies {
 //    implementation "androidx.camera:camera-view:1.0.0-SNAPSHOT"
 //    implementation "androidx.camera:camera-core:1.1.0-alpha06"
 
+    // choose one of the two below:
+    implementation 'com.microsoft.onnxruntime:onnxruntime-android:latest.release'  // full package
+    //implementation 'com.microsoft.onnxruntime:onnxruntime-mobile:latest.release'  // mobile package
+
 }

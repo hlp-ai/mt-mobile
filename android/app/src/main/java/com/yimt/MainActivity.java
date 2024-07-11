@@ -35,6 +35,7 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.yimt.databinding.ActivityMainBinding;
+import com.yimt.tts.VITS;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,6 +43,8 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import ai.onnxruntime.OrtException;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -344,20 +347,34 @@ public class MainActivity extends AppCompatActivity {
 
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
-            String text = binding.textTarget.getText().toString();
-            if (text.isEmpty()) {
-                Toast.makeText(this, "翻译内容为空", Toast.LENGTH_SHORT).show();
-                return;
+            try {
+                float[] audio = VITS.audioCreate("", this);
+
+                Log.i("TTS", "TTS  Done");
+
+                String wavFilePath =  getFilesDir().getAbsolutePath() + "/result.wav";
+                VITS.saveArrayAsWav(audio, wavFilePath);
+
+                Log.i("TTS", wavFilePath);
+            } catch (OrtException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            readTranslation(text);
-            binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
-
-            binding.StartTranslation.setEnabled(false);
-            binding.Camera.setEnabled(false);
-            binding.Gallery.setEnabled(false);
-            binding.ReadTranslation.setEnabled(false);
-            binding.MicroPhone.setEnabled(false);
+//            String tex;t = binding.textTarget.getText().toString();
+//            if (text.isEmpty()) {
+//                Toast.makeText(this, "翻译内容为空", Toast.LENGTH_SHORT).show();
+//                return;
+//            }
+//
+//            readTranslation(text);
+//            binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+//
+//            binding.StartTranslation.setEnabled(false);
+//            binding.Camera.setEnabled(false);
+//            binding.Gallery.setEnabled(false);
+//            binding.ReadTranslation.setEnabled(false);
+//            binding.MicroPhone.setEnabled(false);
         });
     }
 
