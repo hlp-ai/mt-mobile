@@ -347,34 +347,20 @@ public class MainActivity extends AppCompatActivity {
 
         // 播放按钮
         binding.ReadTranslation.setOnClickListener(v -> {
-            try {
-                float[] audio = VITS.audioCreate("", this);
-
-                Log.i("TTS", "TTS  Done");
-
-                String wavFilePath =  getFilesDir().getAbsolutePath() + "/result.wav";
-                VITS.saveArrayAsWav(audio, wavFilePath);
-
-                Log.i("TTS", wavFilePath);
-            } catch (OrtException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-//            String tex;t = binding.textTarget.getText().toString();
+            String text = binding.textTarget.getText().toString();
 //            if (text.isEmpty()) {
 //                Toast.makeText(this, "翻译内容为空", Toast.LENGTH_SHORT).show();
 //                return;
 //            }
-//
-//            readTranslation(text);
-//            binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
-//
-//            binding.StartTranslation.setEnabled(false);
-//            binding.Camera.setEnabled(false);
-//            binding.Gallery.setEnabled(false);
-//            binding.ReadTranslation.setEnabled(false);
-//            binding.MicroPhone.setEnabled(false);
+
+            readTranslation(text);
+            binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
+
+            binding.StartTranslation.setEnabled(false);
+            binding.Camera.setEnabled(false);
+            binding.Gallery.setEnabled(false);
+            binding.ReadTranslation.setEnabled(false);
+            binding.MicroPhone.setEnabled(false);
         });
     }
 
@@ -449,6 +435,24 @@ public class MainActivity extends AppCompatActivity {
         return responseJson.getString("translatedText");
     }
 
+    private JSONObject readOffline(String text) throws IOException, OrtException, JSONException {
+        float[] audio = VITS.audioCreate("", this);
+
+        Log.i("TTS", "TTS  Done");
+
+        String wavFilePath =  getFilesDir().getAbsolutePath() + "/result.wav";
+        VITS.saveArrayAsWav(audio, wavFilePath);
+
+        Log.i("TTS", wavFilePath);
+
+        JSONObject ret = new JSONObject();
+        ret.put("type", "wav");
+        ret.put("rate", "22050");
+        ret.put("base64", encodeFileToBase64(wavFilePath));
+
+        return ret;
+    }
+
     private void readTranslation(String text) {
         String server = settings.getString("server", DEFAULT_SERVER);
         String apiKey = settings.getString("apiKey", "");
@@ -457,7 +461,8 @@ public class MainActivity extends AppCompatActivity {
             String error = "";
             JSONObject audioMsg = new JSONObject();
             try {
-                audioMsg = requestTTS(server, apiKey, text);
+                // audioMsg = requestTTS(server, apiKey, text);
+                audioMsg = readOffline(text);
             } catch (Exception e) {
                 e.printStackTrace();
                 error = e.toString();
