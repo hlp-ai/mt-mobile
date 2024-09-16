@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -34,6 +35,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.yimt.audio.PcmToWavUtil;
 import com.yimt.databinding.ActivityMainBinding;
 
 import org.json.JSONArray;
@@ -237,12 +239,14 @@ public class MainActivity extends AppCompatActivity {
         // 话筒按钮: 长按录音
         binding.MicroPhone.setOnLongClickListener(v -> {
             // Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
-            try {
-                // startRecording();
-                audioUtils.startRecording(this);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                // audioUtils.startRecording(this);
+//                audioUtils.startRecordAudio();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+
+            audioUtils.startRecordAudio();
 
             return true;
         });
@@ -250,12 +254,21 @@ public class MainActivity extends AppCompatActivity {
         // 话筒按钮: 松开结束
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
             if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                // stopRecording();
-                audioUtils.stopRecording();
+                //audioUtils.stopRecording();
+                audioUtils.stopRecordAudio();
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
 
+                String wavFilePath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                + "/wav_" + System.currentTimeMillis() + ".wav";
+
+                Log.i("YIMT", "WAV文件路径: " + wavFilePath);
+
+                PcmToWavUtil ptwUtil = new PcmToWavUtil();
+                ptwUtil.pcmToWav(audioUtils.audioCacheFilePath, wavFilePath, true);
+
                 // getTextForAudio(audioFile);
-                getTextForAudio(audioUtils.audioFile);
+                // getTextForAudio(audioUtils.audioFile);
+                getTextForAudio(wavFilePath);
 
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
@@ -511,12 +524,13 @@ public class MainActivity extends AppCompatActivity {
         String audioBase64 = encodeAudioFileToBase64(audioFilePath);
         JSONObject json = new JSONObject();
         json.put("base64", audioBase64);
-        json.put("format", "amr");
-        json.put("rate", 8000);
+        // json.put("format", "amr");
+        json.put("format", "WAV");
+        json.put("rate", 16000);
         json.put("channel", 1);
         json.put("token", "api_key");
         // json.put("len", audioFile.length());
-        json.put("len", audioUtils.audioFile.length());
+        //json.put("len", audioUtils.audioFile.length());
 //        json.put("source", "en");
 //        json.put("target", "zh");
         String lang = lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
