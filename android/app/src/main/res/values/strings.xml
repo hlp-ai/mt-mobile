@@ -28,5 +28,7 @@
     <string name="shrink_view">Fit view above keyboard</string>
     <string name="save">保存</string>
     <string name="close">关闭</string>
+    <string name="ad_note">广告位招商中...</string>
+    <string name="ad_time">0秒</string>
 
 </resources>

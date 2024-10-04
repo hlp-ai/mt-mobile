@@ -58,7 +58,7 @@ public class Utils {
     }
 
     // 服务请求
-    public static String requestService(String urlString, String data, String method) throws IOException, JSONException {
+    public static String requestService(String urlString, String data, String method) throws IOException {
         int CONN_TIMEOUT = 15000;
         int READ_TIMEOUT = 15000;
 
@@ -72,7 +72,6 @@ public class Utils {
         if(data != null) {
             conn.setRequestProperty("Content-Type", "application/json");
             conn.setDoOutput(true);
-//            conn.setDoInput(true);
 
             // 发送请求数据
             OutputStream os = conn.getOutputStream();
@@ -88,6 +87,7 @@ public class Utils {
         while ((line = reader.readLine()) != null) {
             response.append(line);
         }
+
         reader.close();
         is.close();
         conn.disconnect();
@@ -97,6 +97,10 @@ public class Utils {
 
     public static JSONObject requestService(String urlString, String data) throws IOException, JSONException {
         return new JSONObject(requestService(urlString, data, "POST"));
+    }
+
+    public static String requestService(String urlString) throws IOException {
+        return requestService(urlString, null, "GET");
     }
 
 //    public static String lang2code(String lang) {
