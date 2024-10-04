@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.TextView;
@@ -23,6 +24,9 @@ public class FlashActivity extends AppCompatActivity {
 
     private static final int TIMEOUT = 4;
     private int left = TIMEOUT;
+
+    private String ad_id = "";
+    private String ad_url = "";
 
     private Runnable startRunnable = new Runnable() {
 
@@ -55,6 +59,13 @@ public class FlashActivity extends AppCompatActivity {
         String apiKey = settings.getString("apiKey", "");
 
         adView = findViewById(R.id.AD);
+
+        adView.setOnClickListener(view -> {
+            if(ad_id.length()>0 && ad_url.length()>0) {
+                String url = server + "/click_ad?ad_id=" + ad_id + "&platform=app" + "&url=" + ad_url;
+                openWebPage(url);
+            }
+        });
 
         getAD();
 
@@ -95,8 +106,14 @@ public class FlashActivity extends AppCompatActivity {
                 final JSONObject adMsg = requestAD(server);
                 final String ad = adMsg.getString("content");
 
+                ad_id = adMsg.getString("ad_id");
+                ad_url = adMsg.getString("url");
+
                 runOnUiThread(()->adView.setText(ad));
             } catch (Exception e) {
+                ad_url = "";
+                ad_id = "";
+
                 e.printStackTrace();
                 final String error = e.toString();
 
@@ -115,5 +132,13 @@ public class FlashActivity extends AppCompatActivity {
         json.put("platform", "app");
 
         return Utils.requestService(url, json.toString());
+    }
+
+    public void openWebPage(String url) {
+        Uri webpage = Uri.parse(url);
+        Intent intent = new Intent(Intent.ACTION_VIEW, webpage);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
     }
 }
