@@ -381,6 +381,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // 翻译文本
     private void translateText(String text) {
         String server = settings.getString("server", DEFAULT_SERVER);
         String apiKey = settings.getString("apiKey", "");
@@ -407,6 +408,7 @@ public class MainActivity extends AppCompatActivity {
         thread.start();
     }
 
+    // 请求服务器进行文本翻译
     private String requestTranslate(String server, String apiKey, String text) throws Exception {
         String url = server + "/translate";
         Log.d("yimt", "Translate using " + url);

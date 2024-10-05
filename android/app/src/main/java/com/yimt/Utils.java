@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.util.Base64;
+import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -79,20 +80,40 @@ public class Utils {
             os.close();
         }
 
-        // 获取并处理响应数据
-        InputStream is = conn.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        String line;
-        StringBuilder response = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
+        int responseCode = conn.getResponseCode();
+
+        Log.d("Yimt", "RCode: " + String.valueOf(responseCode));
+
+        if (responseCode >= 400 && responseCode <= 599) {
+            // 如果响应码是错误的，获取错误流
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            String inputLine;
+            StringBuffer response = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+
+            in.close();
+            // 输出错误响应内容
+            // System.out.println("Error response: " + response.toString());
+            throw new IOException(response.toString());
+        } else {
+            // 获取并处理响应数据
+            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
+            reader.close();
+
+            conn.disconnect();
+
+            return response.toString();
         }
 
-        reader.close();
-        is.close();
-        conn.disconnect();
-
-        return response.toString();
     }
 
     public static JSONObject requestService(String urlString, String data) throws IOException, JSONException {
@@ -102,21 +123,6 @@ public class Utils {
     public static String requestService(String urlString) throws IOException {
         return requestService(urlString, null, "GET");
     }
-
-//    public static String lang2code(String lang) {
-//        if(lang.equals("自动检测"))
-//            return "auto";
-//        if(lang.equals("中文"))
-//            return "zh";
-//        if(lang.equals("英文"))
-//            return "en";
-//        if(lang.equals("日文"))
-//            return "ja";
-//        if(lang.equals("阿拉伯文"))
-//            return "ar";
-//
-//        return null;
-//    }
 
     public static HashMap<String, String> parseLanguages(String languages){
         String[] parts = languages.split(",");
