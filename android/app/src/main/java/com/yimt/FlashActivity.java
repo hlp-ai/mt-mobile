@@ -117,7 +117,7 @@ public class FlashActivity extends AppCompatActivity {
                 e.printStackTrace();
                 final String error = e.toString();
 
-                runOnUiThread(()->Toast.makeText(FlashActivity.this, error, Toast.LENGTH_LONG).show());
+                runOnUiThread(()->Toast.makeText(FlashActivity.this, "服务器连接失败", Toast.LENGTH_LONG).show());
             }
         });
 

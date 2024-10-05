@@ -111,21 +111,24 @@ public class AudioUtils {
     }
 
     public String startRecordAudio() {
-        audioCacheFilePath = Environment.getExternalStorageDirectory().getAbsolutePath();
-        audioCacheFilePath += "/jerboa_audio_cache.pcm";
-        //wav文件的路径放在系统的音频目录下
-
-        // 获取最小录音缓存大小，
-        int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT);
-        AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
+        if(isRecording)
+            return null;
 
         isRecording = true;
-        audioRecord.startRecording();
 
         // 创建数据流，将缓存导入数据流
         recordingAudioThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                audioCacheFilePath = Environment.getExternalStorageDirectory().getAbsolutePath();
+                audioCacheFilePath += "/" + System.currentTimeMillis() + ".pcm";
+
+                // 获取最小录音缓存大小，
+                int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT);
+                AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
+
+                audioRecord.startRecording();
+
                 File file = new File(audioCacheFilePath);
                 Log.i(TAG, "PCM文件路径: " + audioCacheFilePath);
 

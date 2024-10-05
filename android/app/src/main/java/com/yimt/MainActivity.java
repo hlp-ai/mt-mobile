@@ -57,11 +57,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int READ_TEXT_MSG = 202;
     private static final int ASR_MSG = 203;
     private static final int OCR_MSG = 204;
-    private static final int LANGUAGES_MSG = 205;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
     // private final String[] languages = new String[]{"自动检测", "中文", "英文", "日文", "阿拉伯文"};
+    // 语言代码到名称
     private HashMap<String, String> langcode2Name = new HashMap<>();
 
     private static final int REQUEST_CAMERA_PERMISSION = 200;
@@ -162,17 +162,6 @@ public class MainActivity extends AppCompatActivity {
                     binding.Gallery.setEnabled(true);
                     binding.ReadTranslation.setEnabled(true);
                     binding.MicroPhone.setEnabled(true);
-                }  else if (msg.what == LANGUAGES_MSG) {
-                    Bundle data = msg.getData();
-                    String serverError = data.getString("error");
-                    if (serverError.length() > 0)
-                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
-                    else{
-                        String languages = data.getString("languages");
-                        settings.edit().putString("languages",languages).apply();
-
-                        setLanguages(languages);
-                    }
                 }
             }
         };
@@ -238,14 +227,6 @@ public class MainActivity extends AppCompatActivity {
 
         // 话筒按钮: 长按录音
         binding.MicroPhone.setOnLongClickListener(v -> {
-            // Toast.makeText(TextActivity.this, "长按", Toast.LENGTH_LONG).show();
-//            try {
-//                // audioUtils.startRecording(this);
-//                audioUtils.startRecordAudio();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-
             audioUtils.startRecordAudio();
 
             return true;
@@ -603,30 +584,22 @@ public class MainActivity extends AppCompatActivity {
         String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
-            String error = "";
-            String languages = "";
             try {
-                if (server != null) {
-                    languages = requestLanguages(server);
-                }
+                final String languages = requestLanguages(server);
+                settings.edit().putString("languages", languages).apply();
+
+                runOnUiThread(()->setLanguages(languages));
             } catch (Exception e) {
                 e.printStackTrace();
-                error = e.toString();
-            }
 
-            Bundle bundle = new Bundle();
-            bundle.putString("error", error);
-            if(error.isEmpty())
-                bundle.putString("languages", languages);
-            Message msg = new Message();
-            msg.setData(bundle);
-            msg.what = LANGUAGES_MSG;
-            mhandler.sendMessage(msg);
+                runOnUiThread(()->Toast.makeText(MainActivity.this, "翻译语言列表获取失败", Toast.LENGTH_LONG).show());
+            }
         });
 
         thread.start();
     }
 
+    // 请求服务器获得语言列表
     private String requestLanguages(String server) throws IOException, JSONException {
         String url = server + "/languages";
 
@@ -644,18 +617,14 @@ public class MainActivity extends AppCompatActivity {
         return languages;
     }
 
+    // 获得语言语言代码
     private String getSourceLang(){
         String sl = binding.spinnerSrcLang.getSelectedItem().toString();
 
         return lang2code(sl);
     }
 
-    private String getTargetLang(){
-        String tl = binding.spinnerTgtLang.getSelectedItem().toString();
-
-        return lang2code(tl);
-    }
-
+    // 设置语言下拉列表
     private void setLanguages(String langSettings){
         langcode2Name = parseLanguages(langSettings);
         String[] langNames = langcode2Name.values().toArray(new String[0]);
@@ -676,6 +645,7 @@ public class MainActivity extends AppCompatActivity {
         binding.spinnerTgtLang.setSelection(1);
     }
 
+    // 从语言名称到代码
     private String lang2code(String lang) {
         for (Map.Entry<String, String> e : langcode2Name.entrySet()) {
             if(e.getValue().equals(lang))
