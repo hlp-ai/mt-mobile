@@ -81,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         settings = getSharedPreferences("com.yimt", 0);
 
         String langSettings = settings.getString("languages", "");
-        if(langSettings.isEmpty())
+        if(langSettings.isEmpty())  // 无缓冲语言列表
             getLanguages();
         else
             setLanguages(langSettings);
@@ -660,13 +660,15 @@ public class MainActivity extends AppCompatActivity {
         langcode2Name = parseLanguages(langSettings);
         String[] langNames = langcode2Name.values().toArray(new String[0]);
 
-        // 添加下拉语言列表
+        // 添加源语言下拉语言列表
         ArrayAdapter<String> srcLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, langNames);
         srcLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerSrcLang.setAdapter(srcLangAdapter);
 
-        // 添加下拉语言列表
-        ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, langNames);
+        // 添加目标下拉语言列表
+        langcode2Name.remove("auto");
+        String[] tgtLangNames = langcode2Name.values().toArray(new String[0]);
+        ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, tgtLangNames);
         tgtLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
         binding.spinnerTgtLang.setSelection(1);
