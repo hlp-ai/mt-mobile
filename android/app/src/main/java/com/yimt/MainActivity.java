@@ -664,10 +664,12 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> srcLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, langNames);
         srcLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerSrcLang.setAdapter(srcLangAdapter);
+        binding.spinnerSrcLang.setSelection(0);
 
         // 添加目标下拉语言列表
-        langcode2Name.remove("auto");
-        String[] tgtLangNames = langcode2Name.values().toArray(new String[0]);
+        HashMap<String, String> noAutoLangs = (HashMap<String, String>) langcode2Name.clone();
+        noAutoLangs.remove("auto");
+        String[] tgtLangNames = noAutoLangs.values().toArray(new String[0]);
         ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, tgtLangNames);
         tgtLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
