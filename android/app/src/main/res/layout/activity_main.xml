@@ -41,14 +41,22 @@
             android:background="@null" />
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center">
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/MicroPhone"
+            android:layout_alignParentLeft="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="@string/mic"
+            android:layout_marginHorizontal="8dp"/>
 
         <TextView
             android:id="@+id/Camera"
+            android:layout_toRightOf="@id/MicroPhone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
@@ -57,6 +65,7 @@
 
         <TextView
             android:id="@+id/Gallery"
+            android:layout_toRightOf="@id/Camera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
@@ -64,30 +73,24 @@
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
-            android:id="@+id/MicroPhone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:text="@string/mic"
-            android:layout_marginHorizontal="8dp"/>
-
-        <TextView
-            android:id="@+id/StartTranslation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="18sp"
-            android:text="@string/translate"
-            android:layout_marginHorizontal="8dp"/>
-
-        <TextView
             android:id="@+id/RemoveSourceText"
+            android:layout_toRightOf="@id/Gallery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
             android:text="@string/delete"
             android:layout_marginHorizontal="8dp"/>
 
-    </LinearLayout>
+        <TextView
+            android:id="@+id/StartTranslation"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:text="@string/translate"
+            android:layout_marginHorizontal="8dp"/>
+
+    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -131,7 +134,7 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:textSize="18sp"
-            android:text="分享"
+            android:text="@string/share"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -140,7 +143,7 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:textSize="18sp"
-            android:text="拷贝"
+            android:text="@string/copy"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -149,7 +152,7 @@
             android:layout_height="wrap_content"
             android:maxLines="1"
             android:textSize="18sp"
-            android:text="朗读"
+            android:text="@string/read"
             android:layout_marginHorizontal="8dp"/>
     </LinearLayout>
 

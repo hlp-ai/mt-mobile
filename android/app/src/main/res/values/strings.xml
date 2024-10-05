@@ -37,5 +37,7 @@
     <string name="mic">话筒</string>
     <string name="gallery">相册</string>
     <string name="camera">相机</string>
+    <string name="share">分享</string>
+    <string name="read">朗读</string>
 
 </resources>
