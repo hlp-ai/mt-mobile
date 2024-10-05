@@ -13,14 +13,14 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:textSize="22sp"
-            android:text="欢迎使用YiMT"/>
+            android:text="@string/main_title"/>
 
         <TextView
             android:id="@+id/Settings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            android:text="设置"/>
+            android:text="@string/setting"/>
     </RelativeLayout>
 
     <LinearLayout
@@ -33,7 +33,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="top"
-            android:hint="这里输入..."
+            android:hint="@string/input_hint"
             android:inputType="textMultiLine"
             android:padding="8dp"
             android:textColor="#FF9800"
@@ -52,7 +52,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="相机"
+            android:text="@string/camera"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -60,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="相册"
+            android:text="@string/gallery"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -68,7 +68,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="话筒"
+            android:text="@string/mic"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -76,7 +76,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="翻译"
+            android:text="@string/translate"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -84,7 +84,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="18sp"
-            android:text="删除"
+            android:text="@string/delete"
             android:layout_marginHorizontal="8dp"/>
 
     </LinearLayout>

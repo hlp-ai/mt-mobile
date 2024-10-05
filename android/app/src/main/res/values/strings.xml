@@ -30,5 +30,12 @@
     <string name="close">关闭</string>
     <string name="ad_note">广告位招商中...</string>
     <string name="ad_time">0秒</string>
+    <string name="input_hint">这里输入...</string>
+    <string name="main_title">欢迎使用YiMT</string>
+    <string name="setting">设置</string>
+    <string name="delete">删除</string>
+    <string name="mic">话筒</string>
+    <string name="gallery">相册</string>
+    <string name="camera">相机</string>
 
 </resources>
