@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
     private Handler mhandler;
 
     private static final int READ_TEXT_MSG = 202;
-    private static final int OCR_MSG = 204;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
@@ -106,23 +105,6 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "声音播放失败", Toast.LENGTH_LONG).show();
                             e.printStackTrace();
                         }
-                    }
-
-                    binding.StartTranslation.setEnabled(true);
-                    binding.Camera.setEnabled(true);
-                    binding.Gallery.setEnabled(true);
-                    binding.ReadTranslation.setEnabled(true);
-                    binding.MicroPhone.setEnabled(true);
-                } else if (msg.what == OCR_MSG) {
-                    Bundle data = msg.getData();
-                    String serverError = data.getString("error");
-                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
-                    if (serverError.length() > 0)
-                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
-                    else{
-                        String text = (String) data.get("text");
-                        binding.textSource.setText(text);
-                        binding.textTarget.setText("");
                     }
 
                     binding.StartTranslation.setEnabled(true);
@@ -338,11 +320,10 @@ public class MainActivity extends AppCompatActivity {
             imageUtils.cropImg(this, true, null);  //裁剪
         } else if (resultCode == RESULT_OK && requestCode == CODE_CROP_IMG) {  //裁剪图片返回
             String imgFilePath = imageUtils.cropImgFile.getPath();
-
-            // Toast.makeText(this, imgFilePath, Toast.LENGTH_LONG).show();
-
             String sourceLang = getSourceLang();
-            getTextForImage(imgFilePath, sourceLang);
+
+            // OCR
+            OCR(imgFilePath, sourceLang);
 
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
@@ -530,48 +511,56 @@ public class MainActivity extends AppCompatActivity {
         return responseJson.getString("text");
     }
 
-    private void getTextForImage(String filePath, String sourceLang){
+    private void OCR(String filePath, String sourceLang){
         Log.d("yimt", "getTextForImage");
 
         String server = settings.getString("server", DEFAULT_SERVER);
         String apiKey = settings.getString("apiKey", "");
 
-        String finalFilePath = filePath;
         Thread thread = new Thread(() -> {
-            String error = "";
-            String text = "";
             try {
-                if (server != null) {
-                    text = requestTextForImage(server, apiKey, sourceLang, finalFilePath);
-                }
+                final String text = requestTextForImage(server, apiKey, sourceLang, filePath);
+
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
+                    binding.textSource.setText(text);
+                    binding.textTarget.setText("");
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+                });
             } catch (Exception e) {
                 e.printStackTrace();
-                error = e.toString();
-            }
+                final String error = e.toString();
 
-            Bundle bundle = new Bundle();
-            bundle.putString("error", error);
-            if(error.isEmpty())
-                bundle.putString("text", text);
-            Message msg = new Message();
-            msg.setData(bundle);
-            msg.what = OCR_MSG;
-            mhandler.sendMessage(msg);
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
+                    binding.textTarget.setText("");
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+
+                    Toast.makeText(MainActivity.this, "文字识别失败: " + error, Toast.LENGTH_LONG).show();
+                });
+            }
         });
 
         thread.start();
     }
 
+    // 请求OCR服务
     private String requestTextForImage(String server, String apiKey, String sourceLang, String filePath) throws IOException, JSONException {
         String url = server + "/ocr";
 
         JSONObject json = new JSONObject();
         String base64 = encodeFileToBase64(filePath);
-//        String Source = "en";
-//        String Target = "zh";
         json.put("base64", base64);
-//        json.put("source", Source);
-//        json.put("target", Target);
         json.put("lang", sourceLang);
         if (!apiKey.isEmpty())
             json.put("token", apiKey);
