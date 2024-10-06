@@ -55,13 +55,12 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences settings;
 
     private Handler mhandler;
-    private static final int TRANSLATE_MSG = 201;
+
     private static final int READ_TEXT_MSG = 202;
     private static final int OCR_MSG = 204;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
-    // private final String[] languages = new String[]{"自动检测", "中文", "英文", "日文", "阿拉伯文"};
     // 语言代码到名称
     private HashMap<String, String> langcode2Name = new HashMap<>();
 
@@ -91,21 +90,7 @@ public class MainActivity extends AppCompatActivity {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
 
-                if (msg.what == TRANSLATE_MSG) {
-                    Bundle lc = msg.getData();
-                    String translation = lc.getString("translation");
-                    String serverError = lc.getString("error");
-                    if (translation.isEmpty() && serverError.length() > 0)
-                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
-                    binding.textTarget.setText(translation);
-                    binding.Pending.setVisibility(View.GONE);  // 停止显示进度条
-
-                    binding.StartTranslation.setEnabled(true);
-                    binding.Camera.setEnabled(true);
-                    binding.Gallery.setEnabled(true);
-                    binding.ReadTranslation.setEnabled(true);
-                    binding.MicroPhone.setEnabled(true);
-                } else if (msg.what == READ_TEXT_MSG) {
+                if (msg.what == READ_TEXT_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
                     binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
@@ -195,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
             String text = binding.textSource.getText().toString().trim();
             if (!text.isEmpty()) {
                 translateText(text);
+
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
                 binding.StartTranslation.setEnabled(false);
@@ -375,22 +361,38 @@ public class MainActivity extends AppCompatActivity {
         String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
-            String translation = "";
-            String error = "";
             try {
-                translation = requestTranslate(server, apiKey, text);
+                final String translation = requestTranslate(server, apiKey, text);
+
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  // 停止显示进度条
+
+                    binding.textTarget.setText(translation);
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+                });
             } catch (Exception e) {
                 e.printStackTrace();
-                error = e.toString();
-            }
 
-            Bundle bundle = new Bundle();
-            bundle.putString("translation", translation);
-            bundle.putString("error", error);
-            Message msg = new Message();
-            msg.setData(bundle);
-            msg.what = TRANSLATE_MSG;
-            mhandler.sendMessage(msg);
+                final String error = e.toString();
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  // 停止显示进度条
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+
+                    binding.textTarget.setText("");
+
+                    Toast.makeText(MainActivity.this, "机器翻译失败: " + error, Toast.LENGTH_LONG).show();
+                });
+            }
         });
 
         thread.start();
@@ -490,7 +492,19 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
                 final String error = e.toString();
 
-                runOnUiThread(()->Toast.makeText(MainActivity.this, "语音识别失败: " + error, Toast.LENGTH_LONG).show());
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
+
+                    binding.textTarget.setText("");
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+
+                    Toast.makeText(MainActivity.this, "语音识别失败: " + error, Toast.LENGTH_LONG).show();
+                });
             }
         });
 
