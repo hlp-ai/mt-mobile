@@ -300,7 +300,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            readTranslation(text);
+            // TTS
+            TTS(text);
+
             binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
             binding.StartTranslation.setEnabled(false);
@@ -398,7 +400,7 @@ public class MainActivity extends AppCompatActivity {
         return responseJson.getString("translatedText");
     }
 
-    private void readTranslation(String text) {
+    private void TTS(String text) {
         String server = settings.getString("server", DEFAULT_SERVER);
         String apiKey = settings.getString("apiKey", "");
 
