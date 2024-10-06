@@ -12,6 +12,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -23,6 +24,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -55,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
     private Handler mhandler;
     private static final int TRANSLATE_MSG = 201;
     private static final int READ_TEXT_MSG = 202;
-    private static final int ASR_MSG = 203;
     private static final int OCR_MSG = 204;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
@@ -127,24 +128,6 @@ public class MainActivity extends AppCompatActivity {
                     binding.Gallery.setEnabled(true);
                     binding.ReadTranslation.setEnabled(true);
                     binding.MicroPhone.setEnabled(true);
-                } else if (msg.what == ASR_MSG){
-                    Bundle data = msg.getData();
-                    String serverError = data.getString("error");
-                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
-                    if (serverError.length() > 0)
-                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
-                    else{
-                        String text = (String) data.get("audioToText");
-                        binding.textSource.setText((text));
-                        binding.textTarget.setText("");
-                    }
-
-                    binding.StartTranslation.setEnabled(true);
-                    binding.Camera.setEnabled(true);
-                    binding.Gallery.setEnabled(true);
-                    binding.ReadTranslation.setEnabled(true);
-                    binding.MicroPhone.setEnabled(true);
-
                 } else if (msg.what == OCR_MSG) {
                     Bundle data = msg.getData();
                     String serverError = data.getString("error");
@@ -227,29 +210,34 @@ public class MainActivity extends AppCompatActivity {
 
         // 话筒按钮: 长按录音
         binding.MicroPhone.setOnLongClickListener(v -> {
+            // 录音前震动提示
+            Vibrator vb = (Vibrator)getSystemService(Service.VIBRATOR_SERVICE);
+            vb.vibrate(300);
+
+            // 通过录音线程录音
             audioUtils.startRecordAudio();
 
             return true;
         });
 
-        // 话筒按钮: 松开结束
+        // 话筒按钮: 松开结束录音
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
             if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-                //audioUtils.stopRecording();
                 audioUtils.stopRecordAudio();
+
                 Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
 
                 String wavFilePath = Environment.getExternalStorageDirectory().getAbsolutePath()
-                + "/wav_" + System.currentTimeMillis() + ".wav";
+                        + "/wav_" + System.currentTimeMillis() + ".wav";
 
                 Log.i("YIMT", "WAV文件路径: " + wavFilePath);
 
+                // 将PCM转换成WAV
                 PcmToWavUtil ptwUtil = new PcmToWavUtil();
                 ptwUtil.pcmToWav(audioUtils.audioCacheFilePath, wavFilePath, true);
 
-                // getTextForAudio(audioFile);
-                // getTextForAudio(audioUtils.audioFile);
-                getTextForAudio(wavFilePath);
+                // 异步ASR
+                ASR(wavFilePath);
 
                 binding.Pending.setVisibility(View.VISIBLE);  // 显示进度条
 
@@ -476,51 +464,54 @@ public class MainActivity extends AppCompatActivity {
         return responseJson;
     }
 
-    private void getTextForAudio(String filePath){
+    // ASR
+    private void ASR(String filePath){
         String server = settings.getString("server", DEFAULT_SERVER);
         String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
-            String error = "";
-            String audioToText = "";
             try {
-                audioToText = requestAudioToText(server, filePath);
+                // 请求ASR服务
+                final String audioToText = requestAudioToText(server, filePath);
+
+                // 显示识别文本
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
+
+                    binding.textSource.setText((audioToText));
+                    binding.textTarget.setText("");
+
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);});
             } catch (Exception e) {
                 e.printStackTrace();
-                error = e.toString();
-            }
+                final String error = e.toString();
 
-            Bundle bundle = new Bundle();
-            bundle.putString("error", error);
-            if(error.isEmpty())
-                bundle.putString("audioToText", audioToText);
-            Message msg = new Message();
-            msg.setData(bundle);
-            msg.what = ASR_MSG;
-            mhandler.sendMessage(msg);
+                runOnUiThread(()->Toast.makeText(MainActivity.this, "语音识别失败: " + error, Toast.LENGTH_LONG).show());
+            }
         });
 
         thread.start();
     }
 
+    // 请求ASR服务
     private String requestAudioToText(String server, String audioFilePath) throws IOException, JSONException {
+        // 文件内容BASE64编码
         String audioBase64 = encodeAudioFileToBase64(audioFilePath);
         JSONObject json = new JSONObject();
         json.put("base64", audioBase64);
-        // json.put("format", "amr");
+
         json.put("format", "WAV");
         json.put("rate", 16000);
         json.put("channel", 1);
         json.put("token", "api_key");
-        // json.put("len", audioFile.length());
-        //json.put("len", audioUtils.audioFile.length());
-//        json.put("source", "en");
-//        json.put("target", "zh");
-        String lang = lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
+        String lang = getSourceLang();  // lang2code(binding.spinnerSrcLang.getSelectedItem().toString());
         json.put("lang", lang);
 
         String url = server + "/asr";
-
         JSONObject responseJson = Utils.requestService(url, json.toString());
 
         return responseJson.getString("text");

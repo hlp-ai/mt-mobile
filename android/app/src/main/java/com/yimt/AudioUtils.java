@@ -31,12 +31,10 @@ public class AudioUtils {
     public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
 
     private static final String TAG = "YiMT";
-    //private final Context context;
 
-    private AudioRecord audioRecord;
+    private AudioRecord audioRecord = null;
 
     public String audioCacheFilePath;
-    private String wavFilePath;
 
     /**
      * 录音的工作线程
@@ -77,54 +75,21 @@ public class AudioUtils {
         });
     }
 
-    //开始录音
-    public String startRecording(Activity context) throws IOException {
-        File dir = new File(context.getExternalFilesDir(null), "audio");
-        if (!dir.exists())
-            dir.mkdirs();
-
-        File soundFile = new File(dir, System.currentTimeMillis() + ".amr");
-        if (!soundFile.exists())
-            soundFile.createNewFile();
-
-        mediaRecorder = new MediaRecorder();
-        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_WB);
-        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_WB);
-        audioFile = soundFile.getAbsolutePath(); // 使用 soundFile 的路径
-        mediaRecorder.setOutputFile(audioFile);
-
-        mediaRecorder.prepare();
-        mediaRecorder.start();
-
-        return audioFile;
-    }
-
-    // 停止录音
-    public void stopRecording() {
-        if(mediaRecorder != null){
-            mediaRecorder.stop();
-            mediaRecorder.reset();
-            mediaRecorder.release();
-            mediaRecorder = null;
-        }
-    }
-
-    public String startRecordAudio() {
+    public void startRecordAudio() {
         if(isRecording)
-            return null;
+            return;
 
         isRecording = true;
 
-        // 创建数据流，将缓存导入数据流
         recordingAudioThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                audioCacheFilePath = Environment.getExternalStorageDirectory().getAbsolutePath();
-                audioCacheFilePath += "/" + System.currentTimeMillis() + ".pcm";
+                audioCacheFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() +
+                        "/" + System.currentTimeMillis() + ".pcm";
 
                 // 获取最小录音缓存大小，
-                int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT);
+                int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ,
+                        CHANNEL_CONFIG, AUDIO_FORMAT);
                 AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
 
                 audioRecord.startRecording();
@@ -132,12 +97,7 @@ public class AudioUtils {
                 File file = new File(audioCacheFilePath);
                 Log.i(TAG, "PCM文件路径: " + audioCacheFilePath);
 
-                if (file.exists())
-                    file.delete();
-
                try {
-                   file.createNewFile();
-
                    FileOutputStream fos = new FileOutputStream(file);
 
                    byte[] data = new byte[minBufferSize];
@@ -161,13 +121,12 @@ public class AudioUtils {
         });
 
         recordingAudioThread.start();
-
-        return audioCacheFilePath;
     }
 
-    public String stopRecordAudio() {
+    public void stopRecordAudio() {
         try {
             this.isRecording = false;
+
             if (this.audioRecord != null) {
                 this.audioRecord.stop();
                 this.audioRecord.release();
@@ -176,12 +135,8 @@ public class AudioUtils {
                 this.recordingAudioThread.interrupt();
                 this.recordingAudioThread = null;
             }
-
-            return audioCacheFilePath;
         } catch (Exception e) {
-            Log.w(TAG, e.getLocalizedMessage());
-
-            return null;
+            e.printStackTrace();
         }
     }
 }
