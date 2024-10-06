@@ -332,12 +332,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK && requestCode == CODE_SETIMG_ALNUM) {//相册数据返回
-            imageUtils.cropImg(this, false, data, "image_hd");//裁剪
-        } else if (resultCode == RESULT_OK && requestCode == CODE_SETIMG_CAM) {//相机拍照返回
-            imageUtils.cropImg(this, true, null, "image_hd");//裁剪
-            //imageUtils.refreshAlbum(mContext, imageUtils.camImgFile.getPath());//刷新相册
-        } else if (resultCode == RESULT_OK && requestCode == CODE_CROP_IMG) {//裁剪图片返回
+        if (resultCode == RESULT_OK && requestCode == CODE_SETIMG_ALNUM) {  //相册数据返回
+            imageUtils.cropImg(this, false, data);  //裁剪
+        } else if (resultCode == RESULT_OK && requestCode == CODE_SETIMG_CAM) { //相机拍照返回
+            imageUtils.cropImg(this, true, null);  //裁剪
+        } else if (resultCode == RESULT_OK && requestCode == CODE_CROP_IMG) {  //裁剪图片返回
             String imgFilePath = imageUtils.cropImgFile.getPath();
 
             // Toast.makeText(this, imgFilePath, Toast.LENGTH_LONG).show();

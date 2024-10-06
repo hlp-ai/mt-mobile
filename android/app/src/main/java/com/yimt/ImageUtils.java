@@ -17,9 +17,7 @@ import android.view.WindowManager;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+
 
 public class ImageUtils {
     public static final int CODE_SETIMG_ALNUM = 572;
@@ -34,20 +32,10 @@ public class ImageUtils {
         //获取当前系统的android版本号
         int currentApiVersion = android.os.Build.VERSION.SDK_INT;
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
-        String str = dateFormat.format(new Date(System.currentTimeMillis()));
-
         //设置保存拍摄照片路径(DCIM/Camera/Modle_PictureWall_img_20170212_122223.jpg)
         //路径默认，若修改则不能保存照片
-        camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "/Camera/LaibaDoctor_img_" + str + ".jpg");
-        try {
-            if (camImgFile.exists()) {
-                camImgFile.delete();
-            }
-            camImgFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                "/yimt_img_" + System.currentTimeMillis() + ".jpg");
 
         Uri outputImgUriFromCam;
         if (currentApiVersion < 24) {
@@ -66,10 +54,9 @@ public class ImageUtils {
     }
 
     public void gotoAlbum(Activity context) {
-        Intent it = new Intent(Intent.ACTION_PICK,
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent it = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
 
-        (context).startActivityForResult(it, CODE_SETIMG_ALNUM);
+        context.startActivityForResult(it, CODE_SETIMG_ALNUM);
     }
 
     /**
@@ -77,10 +64,8 @@ public class ImageUtils {
      * @param context 上下文
      * @param isFromCam 是否来自于相机
      * @param data      图片返回的uri
-     * @param fileName  路径名称
      */
-
-    public void cropImg(Activity context, boolean isFromCam, Intent data, String fileName) {
+    public void cropImg(Activity context, boolean isFromCam, Intent data) {
         File inputFile;
 
         if (isFromCam) {
@@ -88,16 +73,10 @@ public class ImageUtils {
         } else {
             inputFile = new File(getRealPathFromURI(context, data.getData()));
         }
+
         //设置保存路径名称
-        cropImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),fileName+String.valueOf(System.currentTimeMillis()) + ".jpg");
-        try {
-            if (cropImgFile.exists()) {
-                cropImgFile.delete();
-            }
-            cropImgFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        cropImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                "yimt_crop_" + String.valueOf(System.currentTimeMillis()) + ".jpg");
 
         WindowManager manager = context.getWindowManager();
         DisplayMetrics outMetrics = new DisplayMetrics();
@@ -108,13 +87,12 @@ public class ImageUtils {
 
         it.putExtra("output", Uri.fromFile(cropImgFile));
         it.putExtra("crop", "true");
-
         it.putExtra("scale", true); //缩放
 
         // 返回格式
         it.putExtra("outputFormat", "JPEG");
 
-        (context).startActivityForResult(it, CODE_CROP_IMG);
+        context.startActivityForResult(it, CODE_CROP_IMG);
     }
 
     public String getRealPathFromURI(Activity context, Uri uri) {
