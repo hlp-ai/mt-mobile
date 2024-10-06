@@ -3,20 +3,15 @@ package com.yimt;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 
 
 public class ImageUtils {
@@ -127,32 +122,4 @@ public class ImageUtils {
         }
     }
 
-    public static String encodebase64(Bitmap bitmap) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-        byte[] bytes = baos.toByteArray();
-
-        return new String(Base64.encode(bytes, Base64.DEFAULT));
-    }
-
-    public void refreshAlbum(Context context, String path) {
-        context.sendBroadcast(new Intent("android.intent.action.MEDIA_SCANNER_SCAN_FILE", Uri.parse("file://" + path)));
-    }
-
-    public File getImg(Activity context, boolean isFromCam, boolean isSetHd, Intent data, String fileName) {
-        File inputFile = null;
-        try {
-            if (isFromCam) {
-                inputFile = camImgFile;
-            } else {
-                inputFile = new File(getRealPathFromURI(context, data.getData()));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        return inputFile;
-
-    }
 }

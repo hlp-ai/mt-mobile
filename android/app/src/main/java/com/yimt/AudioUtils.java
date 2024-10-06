@@ -1,7 +1,5 @@
 package com.yimt;
 
-import android.app.Activity;
-import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaPlayer;
@@ -11,7 +9,6 @@ import android.util.Base64;
 import android.util.Log;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -60,18 +57,6 @@ public class AudioUtils {
         mediaPlayer.setOnCompletionListener(mp -> {
             mediaPlayer.release();
             tempAudioFile.delete();
-        });
-    }
-
-    // 播放音频文件
-    public static void playAudio(String audioFile) throws IOException {
-        MediaPlayer mediaPlayer = new MediaPlayer();
-        mediaPlayer.setDataSource(audioFile);
-        mediaPlayer.prepare();
-        mediaPlayer.start();
-
-        mediaPlayer.setOnCompletionListener(mp -> {
-            mediaPlayer.release();
         });
     }
 
