@@ -37,7 +37,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.snackbar.Snackbar;
-import com.yimt.audio.PcmToWavUtil;
 import com.yimt.databinding.ActivityMainBinding;
 
 import org.json.JSONArray;
@@ -100,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                         String type = (String) data.get("type");
                         // playAudio(audio, type);
                         try {
-                            audioUtils.playAudio(audio, type);
+                            AudioUtils.playAudio(audio, type);
                         } catch (IOException e) {
                             Toast.makeText(MainActivity.this, "声音播放失败", Toast.LENGTH_LONG).show();
                             e.printStackTrace();
@@ -497,6 +496,7 @@ public class MainActivity extends AppCompatActivity {
     private String requestAudioToText(String server, String audioFilePath) throws IOException, JSONException {
         // 文件内容BASE64编码
         String audioBase64 = encodeAudioFileToBase64(audioFilePath);
+
         JSONObject json = new JSONObject();
         json.put("base64", audioBase64);
 
