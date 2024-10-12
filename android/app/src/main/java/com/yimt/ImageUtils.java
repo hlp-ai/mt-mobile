@@ -12,6 +12,7 @@ import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
 import java.io.File;
+import java.io.IOException;
 
 
 public class ImageUtils {
@@ -31,6 +32,12 @@ public class ImageUtils {
         //路径默认，若修改则不能保存照片
         camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
                 "/yimt_img_" + System.currentTimeMillis() + ".jpg");
+
+//        try {
+//            camImgFile.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         Uri outputImgUriFromCam;
         if (currentApiVersion < 24) {
@@ -72,6 +79,12 @@ public class ImageUtils {
         //设置保存路径名称
         cropImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                 "yimt_crop_" + String.valueOf(System.currentTimeMillis()) + ".jpg");
+
+//        try {
+//            cropImgFile.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         WindowManager manager = context.getWindowManager();
         DisplayMetrics outMetrics = new DisplayMetrics();

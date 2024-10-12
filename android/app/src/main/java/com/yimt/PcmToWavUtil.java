@@ -35,30 +35,19 @@ public class PcmToWavUtil {
         return SingleHolder.mInstance;
     }
 
-    /**
-     * pcm文件转wav文件
-     *
-     * @param inFilename  源文件路径
-     * @param outFilename 目标文件路径
-     * @param deleteOrg   是否删除源文件
-     */
     public void pcmToWav(String inFilename, String outFilename, boolean deleteOrg) {
-        FileInputStream in;
-        FileOutputStream out;
         long totalAudioLen;
         long totalDataLen;
         long longSampleRate = mSampleRate;
         int channels = 1;
         long byteRate = 16 * mSampleRate * channels / 8;
         byte[] data = new byte[mBufferSize];
-        try {
-            in = new FileInputStream(inFilename);
-            out = new FileOutputStream(outFilename);
+        try(FileInputStream in = new FileInputStream(inFilename);
+        FileOutputStream out = new FileOutputStream(outFilename);) {
             totalAudioLen = in.getChannel().size();
             totalDataLen = totalAudioLen + 36;
 
-            writeWaveFileHeader(out, totalAudioLen, totalDataLen,
-                    longSampleRate, channels, byteRate);
+            writeWaveFileHeader(out, totalAudioLen, totalDataLen, longSampleRate, channels, byteRate);
             while (in.read(data) != -1) {
                 out.write(data);
             }
@@ -76,12 +65,9 @@ public class PcmToWavUtil {
         pcmToWav(inFilename, outFilename, false);
     }
 
-    /**
-     * 加入wav文件头
-     */
     private void writeWaveFileHeader(FileOutputStream out, long totalAudioLen,
-                                     long totalDataLen, long longSampleRate, int channels, long byteRate)
-            throws IOException {
+                                     long totalDataLen, long longSampleRate,
+                                     int channels, long byteRate) throws IOException {
         byte[] header = new byte[44];
         header[0] = 'R'; // RIFF/WAVE header
         header[1] = 'I';

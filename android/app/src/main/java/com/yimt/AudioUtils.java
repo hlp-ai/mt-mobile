@@ -28,8 +28,6 @@ public class AudioUtils {
 
     private AudioRecord audioRecord = null;
 
-    public String audioCacheFilePath;
-
     private Thread recordingAudioThread;
     private boolean isRecording = false;
 
@@ -54,7 +52,7 @@ public class AudioUtils {
         });
     }
 
-    public void startRecordAudio() {
+    public void startRecordAudio(String recordFile) {
         if(isRecording)
             return;
 
@@ -63,35 +61,31 @@ public class AudioUtils {
         recordingAudioThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                audioCacheFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() +
-                        "/" + System.currentTimeMillis() + ".pcm";
+                Log.i(TAG, "开始录音");
 
                 // 获取最小录音缓存大小，
                 int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ,
                         CHANNEL_CONFIG, AUDIO_FORMAT);
-                AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
+                audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
 
                 audioRecord.startRecording();
 
-                File file = new File(audioCacheFilePath);
-                Log.i(TAG, "PCM文件路径: " + audioCacheFilePath);
+                File file = new File(recordFile);
+                Log.i(TAG, "PCM文件路径: " + recordFile);
 
-               try {
-                   FileOutputStream fos = new FileOutputStream(file);
-
+               try(FileOutputStream fos = new FileOutputStream(file)) {
                    byte[] data = new byte[minBufferSize];
                    int read;
 
                    while (isRecording && !recordingAudioThread.isInterrupted()) {
                        read = audioRecord.read(data, 0, minBufferSize);
-                       if (AudioRecord.ERROR_INVALID_OPERATION != read) {
-                           fos.write(data);
+                       if (AudioRecord.ERROR_INVALID_OPERATION != read && read>0) {
+                           fos.write(data, 0, read);
                            Log.i("audioRecordTest", "写录音数据->" + read);
                        }
                    }
 
-                   // 关闭数据流
-                   fos.close();
+                   Log.i(TAG, "结束录音");
                }
                catch (IOException e){
                    e.printStackTrace();

@@ -106,6 +106,7 @@ public class Utils {
 
     public static String encodeAudioFileToBase64(String filePath) throws IOException {
         byte[] audioData = readFileToByteArray(filePath);
+        Log.i("YIMT", String.valueOf(audioData.length));
         return Base64.encodeToString(audioData, Base64.DEFAULT);
     }
 

@@ -68,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
 
     private AudioUtils audioUtils = new AudioUtils();
 
+    private String recordFile;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -181,8 +183,11 @@ public class MainActivity extends AppCompatActivity {
             Vibrator vb = (Vibrator)getSystemService(Service.VIBRATOR_SERVICE);
             vb.vibrate(300);
 
+            recordFile = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() +
+                    "/" + System.currentTimeMillis() + ".pcm";
+
             // 通过录音线程录音
-            audioUtils.startRecordAudio();
+            audioUtils.startRecordAudio(recordFile);
 
             return true;
         });
@@ -192,16 +197,18 @@ public class MainActivity extends AppCompatActivity {
             if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                 audioUtils.stopRecordAudio();
 
-                Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
+                // Toast.makeText(MainActivity.this, "录音完成", Toast.LENGTH_LONG).show();
+                Log.i("YIMT", "录音完成");
 
-                String wavFilePath = Environment.getExternalStorageDirectory().getAbsolutePath()
+                String wavFilePath = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath()
                         + "/wav_" + System.currentTimeMillis() + ".wav";
 
                 Log.i("YIMT", "WAV文件路径: " + wavFilePath);
 
                 // 将PCM转换成WAV
                 PcmToWavUtil ptwUtil = new PcmToWavUtil();
-                ptwUtil.pcmToWav(audioUtils.audioCacheFilePath, wavFilePath, true);
+//                ptwUtil.pcmToWav(audioUtils.audioCacheFilePath, wavFilePath, true);
+                ptwUtil.pcmToWav(recordFile, wavFilePath, true);
 
                 // 异步ASR
                 ASR(wavFilePath);
