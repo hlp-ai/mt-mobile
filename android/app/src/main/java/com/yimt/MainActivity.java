@@ -140,7 +140,8 @@ public class MainActivity extends AppCompatActivity {
 //                    new String[]{Manifest.permission.CAMERA},
 //                    REQUEST_CAMERA_PERMISSION);
 
-        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), 200);
+        if (permissions.size() > 0)
+            ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), 200);
 
         // 设置按钮
         binding.Settings.setOnClickListener(view -> {
@@ -159,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
                                 .putString("server", serverET.getText().toString())
                                 .putString("apiKey", apiET.getText().toString())
                                 .apply();
+                        getLanguages();
                     })
                     .setNegativeButton(getString(R.string.close), null)
                     .show();
@@ -652,7 +654,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> tgtLangAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, tgtLangNames);
         tgtLangAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         binding.spinnerTgtLang.setAdapter(tgtLangAdapter);
-        binding.spinnerTgtLang.setSelection(1);
+        binding.spinnerTgtLang.setSelection(0);
     }
 
     // 从语言名称到代码

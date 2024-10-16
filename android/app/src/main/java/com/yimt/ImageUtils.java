@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.WindowManager;
 
 import java.io.File;
@@ -78,13 +79,7 @@ public class ImageUtils {
 
         //设置保存路径名称
         cropImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                "yimt_crop_" + String.valueOf(System.currentTimeMillis()) + ".jpg");
-
-//        try {
-//            cropImgFile.createNewFile();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+                "yimt_crop_" + System.currentTimeMillis() + ".jpg");
 
         WindowManager manager = context.getWindowManager();
         DisplayMetrics outMetrics = new DisplayMetrics();
@@ -93,12 +88,14 @@ public class ImageUtils {
         Intent it = new Intent("com.android.camera.action.CROP");
         it.setDataAndType(getImageContentUri(context, inputFile), "image/jpg");
 
-        it.putExtra("output", Uri.fromFile(cropImgFile));
+        it.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(cropImgFile));
+        it.putExtra("return-data", false);
         it.putExtra("crop", "true");
         it.putExtra("scale", true); //缩放
-
         // 返回格式
         it.putExtra("outputFormat", "JPEG");
+
+        Log.d("yimt", "start crop");
 
         context.startActivityForResult(it, CODE_CROP_IMG);
     }
