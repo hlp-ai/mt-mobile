@@ -25,33 +25,53 @@ public class ImageUtils {
     public File camImgFile = null;
     public File cropImgFile = null;
 
+    public Uri camImageUril = null;
+
     public void gotoCam(Activity context) {
         //获取当前系统的android版本号
         int currentApiVersion = android.os.Build.VERSION.SDK_INT;
 
-        //路径默认，若修改则不能保存照片
-        camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
-                "cam.jpg");
-
-        try {
-            if (camImgFile.exists())
-                camImgFile.delete();
-            camImgFile.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        //路径默认，若修改则不能保存照片
+//        camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+//                "cam.jpg");
+//
+//        try {
+//            if (camImgFile.exists())
+//                camImgFile.delete();
+//            camImgFile.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         Uri outputImgUriFromCam;
         if (currentApiVersion < 24) {
+            camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                    "cam.jpg");
             outputImgUriFromCam = Uri.fromFile(camImgFile);
-        } else {
-            ContentValues contentValues = new ContentValues(1);
-            contentValues.put(MediaStore.Images.Media.DATA, camImgFile.getAbsolutePath());
-
-            outputImgUriFromCam = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
-
-            Log.d("yimt", "相机输出Uri: " + outputImgUriFromCam.toString());
         }
+        else {
+            if (currentApiVersion < 29) { // Android 7+
+                camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                        "cam.jpg");
+
+                ContentValues contentValues = new ContentValues(1);
+                contentValues.put(MediaStore.Images.Media.DATA, camImgFile.getAbsolutePath());
+
+                outputImgUriFromCam = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+
+                Log.d("yimt", "相机输出Uri: " + outputImgUriFromCam.toString());
+            } else { // Android 10+
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MediaStore.Video.Media.DISPLAY_NAME, "yimt-photo.jpg");
+                contentValues.put(MediaStore.Video.Media.MIME_TYPE, "image/jpeg");
+
+                outputImgUriFromCam = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+
+                Log.d("yimt", "相机输出Uri: " + outputImgUriFromCam.toString());
+            }
+        }
+
+        camImageUril = outputImgUriFromCam;
 
         //跳转到照相机拍照
         Intent it = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -92,7 +112,7 @@ public class ImageUtils {
 //        manager.getDefaultDisplay().getMetrics(outMetrics);
 
         Intent it = new Intent("com.android.camera.action.CROP");
-        Uri imageUri = getImageContentUri(context, inputFile);
+        Uri imageUri = camImageUril; // getImageContentUri(context, inputFile);
         Log.d("yimt", "启动裁剪Uri: " + imageUri.toString());
         it.setDataAndType(imageUri, "image/jpg");
 
