@@ -29,16 +29,17 @@ public class ImageUtils {
         //获取当前系统的android版本号
         int currentApiVersion = android.os.Build.VERSION.SDK_INT;
 
-        //设置保存拍摄照片路径(DCIM/Camera/Modle_PictureWall_img_20170212_122223.jpg)
         //路径默认，若修改则不能保存照片
         camImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
-                "/yimt_img_" + System.currentTimeMillis() + ".jpg");
+                "cam.jpg");
 
-//        try {
-//            camImgFile.createNewFile();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            if (camImgFile.exists())
+                camImgFile.delete();
+            camImgFile.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         Uri outputImgUriFromCam;
         if (currentApiVersion < 24) {
@@ -48,6 +49,8 @@ public class ImageUtils {
             contentValues.put(MediaStore.Images.Media.DATA, camImgFile.getAbsolutePath());
 
             outputImgUriFromCam = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+
+            Log.d("yimt", "相机输出Uri: " + outputImgUriFromCam.toString());
         }
 
         //跳转到照相机拍照
@@ -62,12 +65,6 @@ public class ImageUtils {
         context.startActivityForResult(it, CODE_SETIMG_ALNUM);
     }
 
-    /**
-     * 裁剪图片
-     * @param context 上下文
-     * @param isFromCam 是否来自于相机
-     * @param data      图片返回的uri
-     */
     public void cropImg(Activity context, boolean isFromCam, Intent data) {
         File inputFile;
 
@@ -81,12 +78,23 @@ public class ImageUtils {
         cropImgFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                 "yimt_crop_" + System.currentTimeMillis() + ".jpg");
 
-        WindowManager manager = context.getWindowManager();
-        DisplayMetrics outMetrics = new DisplayMetrics();
-        manager.getDefaultDisplay().getMetrics(outMetrics);
+//        try {
+//            if (cropImgFile.exists()) {
+//                cropImgFile.delete();
+//            }
+//            cropImgFile.createNewFile();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+
+//        WindowManager manager = context.getWindowManager();
+//        DisplayMetrics outMetrics = new DisplayMetrics();
+//        manager.getDefaultDisplay().getMetrics(outMetrics);
 
         Intent it = new Intent("com.android.camera.action.CROP");
-        it.setDataAndType(getImageContentUri(context, inputFile), "image/jpg");
+        Uri imageUri = getImageContentUri(context, inputFile);
+        Log.d("yimt", "启动裁剪Uri: " + imageUri.toString());
+        it.setDataAndType(imageUri, "image/jpg");
 
         it.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(cropImgFile));
         it.putExtra("return-data", false);
@@ -95,20 +103,21 @@ public class ImageUtils {
         // 返回格式
         it.putExtra("outputFormat", "JPEG");
 
-        Log.d("yimt", "start crop");
+//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+//            it.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//        }
+
+        Log.d("yimt", "启动裁剪: " + inputFile);
 
         context.startActivityForResult(it, CODE_CROP_IMG);
     }
 
     public String getRealPathFromURI(Activity context, Uri uri) {
         String[] filePathColumn = {MediaStore.Images.Media.DATA};
-
         Cursor cursor = context.getContentResolver().query(uri, filePathColumn, null, null, null);
 
         cursor.moveToFirst();
-
         int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-
         String picturePath = cursor.getString(columnIndex);
 
         cursor.close();
@@ -118,7 +127,9 @@ public class ImageUtils {
 
     public Uri getImageContentUri(Activity context, File imageFile) {
         String filePath = imageFile.getAbsolutePath();
-        Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, new String[]{"_id"}, "_data=? ", new String[]{filePath}, (String) null);
+        Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{"_id"}, "_data=? ",
+                new String[]{filePath}, (String) null);
         if (cursor != null && cursor.moveToFirst()) {
             @SuppressLint("Range") int values1 = cursor.getInt(cursor.getColumnIndex("_id"));
             Uri baseUri = Uri.parse("content://media/external/images/media");

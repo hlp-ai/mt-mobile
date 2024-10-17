@@ -63,8 +63,6 @@ public class MainActivity extends AppCompatActivity {
     // 语言代码到名称
     private HashMap<String, String> langcode2Name = new HashMap<>();
 
-    private static final int REQUEST_CAMERA_PERMISSION = 200;
-
     private ImageUtils imageUtils = new ImageUtils();
 
     private AudioUtils audioUtils = new AudioUtils();
@@ -120,25 +118,18 @@ public class MainActivity extends AppCompatActivity {
 
         ArrayList<String> permissions = new ArrayList<String>();
         // 申请录音权限
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.RECORD_AUDIO);
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 200);
 
         // 申请写卡权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-//            // 请求权限
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-//                    210);
 
         // 申请拍照权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.CAMERA);
-//            ActivityCompat.requestPermissions(this,
-//                    new String[]{Manifest.permission.CAMERA},
-//                    REQUEST_CAMERA_PERMISSION);
 
         if (permissions.size() > 0)
             ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), 200);
