@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     private AudioUtils audioUtils = new AudioUtils();
 
-    private String recordFile;
+    private String recordFile = null;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -193,6 +193,9 @@ public class MainActivity extends AppCompatActivity {
 
         // 话筒按钮: 松开结束录音
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
+            if(recordFile == null)
+                return false;
+
             if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
                 audioUtils.stopRecordAudio();
 
@@ -219,6 +222,8 @@ public class MainActivity extends AppCompatActivity {
                 binding.Gallery.setEnabled(false);
                 binding.ReadTranslation.setEnabled(false);
                 binding.MicroPhone.setEnabled(false);
+
+                recordFile = null;
 
                 return true;
             }
