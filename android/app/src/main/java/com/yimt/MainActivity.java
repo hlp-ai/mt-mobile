@@ -33,6 +33,7 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -54,9 +55,11 @@ public class MainActivity extends AppCompatActivity {
 
     private SharedPreferences settings;
 
-    private Handler mhandler;
+    private static final int PERMISSION_REQ_CODE = 300;
 
-    private static final int READ_TEXT_MSG = 202;
+    private boolean writePermission = false;
+    private boolean cameraPermission = false;
+    private boolean recordPermission = false;
 
     private final static String DEFAULT_SERVER = "http://192.168.1.104:5555";
 
@@ -85,54 +88,23 @@ public class MainActivity extends AppCompatActivity {
         else
             setLanguages(langSettings);
 
-        mhandler = new Handler(Looper.getMainLooper()) {
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-
-                if (msg.what == READ_TEXT_MSG) {
-                    Bundle data = msg.getData();
-                    String serverError = data.getString("error");
-                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
-                    if (serverError.length() > 0)
-                        Toast.makeText(MainActivity.this, serverError, Toast.LENGTH_LONG).show();
-                    else{
-                        String audio = (String) data.get("audio");
-                        String type = (String) data.get("type");
-                        // playAudio(audio, type);
-                        try {
-                            AudioUtils.playAudio(audio, type);
-                        } catch (IOException e) {
-                            Toast.makeText(MainActivity.this, "声音播放失败", Toast.LENGTH_LONG).show();
-                            e.printStackTrace();
-                        }
-                    }
-
-                    binding.StartTranslation.setEnabled(true);
-                    binding.Camera.setEnabled(true);
-                    binding.Gallery.setEnabled(true);
-                    binding.ReadTranslation.setEnabled(true);
-                    binding.MicroPhone.setEnabled(true);
-                }
-            }
-        };
-
         ArrayList<String> permissions = new ArrayList<String>();
-        // 申请录音权限
+        // 检查录音权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
                 != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.RECORD_AUDIO);
 
-        // 申请写卡权限
+        // 检查写卡权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-        // 申请拍照权限
+        // 检查拍照权限
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
             permissions.add(Manifest.permission.CAMERA);
 
-        if (permissions.size() > 0)
-            ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), 200);
+        if (permissions.size() > 0)  // 有需要授权的
+            ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), PERMISSION_REQ_CODE);
 
         // 设置按钮
         binding.Settings.setOnClickListener(view -> {
@@ -347,6 +319,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if(requestCode == PERMISSION_REQ_CODE && grantResults.length > 0){
+            for(int i=0; i<grantResults.length; i++){
+                if(permissions[i] == Manifest.permission.WRITE_EXTERNAL_STORAGE){
+
+                }
+            }
+        }
+    }
+
     // 翻译文本
     private void translateText(String text) {
         String server = settings.getString("server", DEFAULT_SERVER);
@@ -415,29 +400,44 @@ public class MainActivity extends AppCompatActivity {
         String apiKey = settings.getString("apiKey", "");
 
         Thread thread = new Thread(() -> {
-            String error = "";
-            JSONObject audioMsg = new JSONObject();
+            //String error = "";
+            //JSONObject audioMsg = new JSONObject();
             try {
-                audioMsg = requestTTS(server, apiKey, text);
+                JSONObject audioMsg = requestTTS(server, apiKey, text);
+
+                runOnUiThread(()->{
+                    try {
+                        String audio = audioMsg.getString("base64");
+                        String type = audioMsg.getString("type");
+
+                        AudioUtils.playAudio(audio, type);
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "声音播放失败", Toast.LENGTH_LONG).show();
+                        e.printStackTrace();
+                    }
+
+                    binding.Pending.setVisibility(View.GONE);
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+                });
             } catch (Exception e) {
                 e.printStackTrace();
-                error = e.toString();
-            }
+                final String error = e.toString();
 
-            Bundle bundle = new Bundle();
-            bundle.putString("error", error);
-            if(error.isEmpty()){
-                try {
-                    bundle.putString("audio", audioMsg.getString("base64"));
-                    bundle.putString("type", audioMsg.getString("type"));
-                } catch (JSONException e) {
-                    throw new RuntimeException(e);
-                }
+                runOnUiThread(()->{
+                    binding.Pending.setVisibility(View.GONE);  //  停止显示进度条
+                    binding.StartTranslation.setEnabled(true);
+                    binding.Camera.setEnabled(true);
+                    binding.Gallery.setEnabled(true);
+                    binding.ReadTranslation.setEnabled(true);
+                    binding.MicroPhone.setEnabled(true);
+
+                    Toast.makeText(MainActivity.this, "语音合成失败: " + error, Toast.LENGTH_LONG).show();
+                });
             }
-            Message msg = new Message();
-            msg.setData(bundle);
-            msg.what = READ_TEXT_MSG;
-            mhandler.sendMessage(msg);
         });
         thread.start();
     }
