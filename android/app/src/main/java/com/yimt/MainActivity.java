@@ -163,6 +163,10 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
+        binding.MicroPhone.setOnClickListener(v->{
+            Toast.makeText(MainActivity.this, "请长按开始录音，松开停止", Toast.LENGTH_SHORT).show();
+        });
+
         // 话筒按钮: 松开结束录音
         binding.MicroPhone.setOnTouchListener((view, motionEvent) -> {
             if(recordFile == null)
