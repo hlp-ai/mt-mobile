@@ -166,6 +166,7 @@
             android:id="@+id/spinnerSrcLang"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_marginHorizontal="8dp"/>
 
         <TextView
@@ -177,6 +178,7 @@
             android:id="@+id/spinnerTgtLang"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:gravity="center"
             android:layout_marginHorizontal="8dp"/>
     </LinearLayout>
 
