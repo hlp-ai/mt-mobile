@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
+    android:background="@mipmap/background1"
     tools:context=".FlashActivity">
 
     <TextView
@@ -12,6 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/ad_note"
+        android:textColor="@color/red"
         android:textSize="22sp"/>
 
     <TextView
@@ -20,6 +22,7 @@
         android:layout_height="wrap_content"
         android:text="@string/ad_time"
         android:paddingTop="30dp"
+        android:textColor="@color/red"
         android:textSize="16sp"/>
 
 </LinearLayout>
