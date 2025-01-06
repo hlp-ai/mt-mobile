@@ -36,17 +36,24 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:text="YiMT以中文为中心的机器翻译"
-            android:textColor="#D88585"
+            android:paddingBottom="6dp"
+            android:text="YiMT"
+            android:textColor="@color/blue"
+            android:textSize="22sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="6dp"
+            android:text="以中文为中心的机器翻译"
+            android:textColor="@color/blue"
             android:textSize="22sp"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingBottom="30dp"
             android:text="版权所有2024 刘小峰"
-            android:textColor="#D88585"
-            android:textSize="20sp"/>
+            android:textColor="@color/blue"
+            android:textSize="18sp"/>
 
     </LinearLayout>
 
