@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:background="@mipmap/background1"
     tools:context=".FlashActivity">
 
@@ -12,6 +10,7 @@
         android:id="@+id/AD"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:text="@string/ad_note"
         android:textColor="@color/red"
         android:textSize="22sp"/>
@@ -20,9 +19,35 @@
         android:id="@+id/TIME"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_below="@id/AD"
+        android:layout_centerHorizontal="true"
         android:text="@string/ad_time"
         android:paddingTop="30dp"
         android:textColor="@color/red"
         android:textSize="16sp"/>
 
-</LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            android:text="YiMT以中文为中心的机器翻译"
+            android:textColor="#D88585"
+            android:textSize="22sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingBottom="30dp"
+            android:text="版权所有2024 刘小峰"
+            android:textColor="#D88585"
+            android:textSize="20sp"/>
+
+    </LinearLayout>
+
+</RelativeLayout>
